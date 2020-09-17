@@ -46,7 +46,11 @@ function ConvertPhyKS2toNeurosuite(basepath,basename,ks_basepath)
 %
 % - reviewed in 11/2019 - added the functionality to convert also the  outputs of phy2
 % - Minor bugfixes by Lianne Klaver 08/2020 to make it work with phy2/ks2
-% outputs.
+% outputs. (fixed for when kcoords are not in sequential order, plus paths
+% etc.)
+% To do: make it grab all the clusters, so you don't have to manually first
+% set all the clusters to good. Make an option to load all 'good' clusters
+% or 'all' clusters, with labels (unsorted,mua,good)
 
 
 if ~exist('basepath','var')
@@ -62,7 +66,11 @@ savepath = basepath;
 
 %finding the last Kilosort folder in order
 if exist('ks_basepath','var')
-    KSdir = ks_basepath;
+    if isempty(ks_basepath)
+        KSdir = cd;
+    else
+        KSdir = ks_basepath;
+    end
 else
     auxDir = dir;
     auxKSD = find([auxDir.isdir]);
@@ -74,11 +82,29 @@ else
 end
 
 %loading phy files
-cd(fullfile(basepath,KSdir));
-
-if ~exist('rez','var')
-    load(fullfile(basepath,KSdir,'rez.mat'))
+if exist('KSdir','var')
+    
+    if basepath==KSdir
+        cd(KSdir)
+        if ~exist('rez','var')
+            load(fullfile(KSdir,'rez.mat'))
+        end
+        
+        
+    else
+        
+        cd(fullfile(basepath,KSdir));
+        if ~exist('rez','var')
+            load(fullfile(basepath,KSdir,'rez.mat'))
+        end
+        
+    end
+else
+    cd(basepath)
+    load(fullfile(basepath,'rez.mat'))
 end
+
+
 
 
 par = LoadParameters(fullfile([basepath],[basename '.xml'])); %this is load differently the xml file than before (EFO 3/3/2019)
@@ -173,22 +199,28 @@ for groupidx = 1:length(allgroups)
     tspktimes       = spktimes(tidx);
     
     gidx            = find(rez.ops.kcoords == tgroup);%find all channels in this group
-    channellist     = [];
+    
+    channellist     =[]; %  rez.ops.chanMap(gidx);%LK
     
     
     for ch = 1:length(par.spikeGroups.groups{groupidx})
-        if sum(ismember(gidx,par.spikeGroups.groups{groupidx}(:)+1))
-            channellist = par.spikeGroups.groups{groupidx}(:)+1;
+%         if sum(ismember(gidx,par.spikeGroups.groups{groupidx}(:)+1)) 
+            % hier gaat het allemaal een beetje wonky op het moment dat de kcoords niet gesorteerd zijn
+            %, replaced by line
+            % below:
+           if sum(ismember(rez.ops.chanMap(gidx), par.spikeGroups.groups{groupidx}(:)+1))
+               channellist = par.spikeGroups.groups{groupidx}(:)+1;
             break
         end
     end
+    
     if isempty(channellist)
         disp(['Cannot find spkgroup for group ' num2str(groupidx) ])
         continue
     end
     
     %% spike extraction from dat
-    if groupidx == 1;
+    if groupidx == 1
         dat             = memmapfile(datpath,'Format','int16');
     end
     tsampsperwave   = (sbefore+safter);
