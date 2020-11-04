@@ -1,6 +1,4 @@
-function [pulseEpochs] = getPulseTimes(analogin)
-
-% Rewriting getPulseIdx to get the pulse timestampIdx
+function [pulseEpochs] = getPulseTimes(analogin);
 
 pulse = analogin.pulse;
 ts = analogin.ts;
@@ -8,8 +6,11 @@ ts = analogin.ts;
 %% Finding depolarizations over time
 
 diffPulse = diff(pulse);
-posPulseIdx = diffPulse > 1;%.5*max(diffPulse); %  for m1 +- 0.2, fpr m122 +- 2
-negPulseIdx = diffPulse < -1;%-.5*max(diffPulse); % 
+
+% right now this value differs per session and that's not good 
+posPulseIdx = diffPulse > 2;%0.3;%1;%.5*max(diffPulse); %  for m1 +- 0.2, fpr m122 +- 2
+negPulseIdx = diffPulse < -2;%-0.3;%-1%-.5*max(diffPulse); % 
+
 
 selPosPulseIdx  = find(posPulseIdx~=0);
 selNegPulseIdx  = find(negPulseIdx~=0);
@@ -27,12 +28,16 @@ for i = 1:length(selNegPulseIdx)-1
     end
 end
 
+doubleIndPos = [];
+doubleIndNeg = [];
+
 for i = 1:length(selPosPulseIdx)-1
     if selPosPulseIdx(i+1) - selPosPulseIdx(i) < 10000 % want dat is 0.333 seconden)
         countPos = countPos+1;
         doubleIndPos(countPos) = selPosPulseIdx(i+1); 
     end
 end
+
 
 delIndxPos = find(ismember(selPosPulseIdx,doubleIndPos));
 delIndxNeg = find(ismember(selNegPulseIdx,doubleIndNeg));

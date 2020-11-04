@@ -84,7 +84,7 @@ end
 %loading phy files
 if exist('KSdir','var')
     
-    if basepath==KSdir
+    if strcmp(basepath,KSdir)
         cd(KSdir)
         if ~exist('rez','var')
             load(fullfile(KSdir,'rez.mat'))
@@ -164,7 +164,7 @@ for s = 1:length(par.spikeGroups.groups)
     shanks(temp1) = s;
 end
 
-cluShank = cluster_info.id; %this is just the ID of the cluster, bad naming that needs change.
+cluIDShank = cluster_info.id; %this is just the ID of the cluster, bad naming that needs change.
 
 cd(basepath)
 folder_name = 'Phy2Clus';
@@ -177,7 +177,7 @@ mkdir(fullfile(savepath,folder_name))
 auxC = unique(clu);
 templateshankassignments = zeros(size(auxC));
 for idx = 1:length(auxC)
-    temp = find(cluShank == auxC(idx));
+    temp = find(cluIDShank == auxC(idx));
     templateshankassignments(idx) = shanks(temp);
 end
 grouplookup = rez.ops.kcoords;
