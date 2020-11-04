@@ -7,9 +7,13 @@ ts = analogin.ts;
 
 diffPulse = diff(pulse);
 
-% right now this value differs per session and that's not good 
-posPulseIdx = diffPulse > 2;%0.3;%1;%.5*max(diffPulse); %  for m1 +- 0.2, fpr m122 +- 2
-negPulseIdx = diffPulse < -2;%-0.3;%-1%-.5*max(diffPulse); % 
+% right now this value differs per session and that's not good see if
+% implementation of SD criteria
+
+pulseThreshold = 2; %0.3;%1;%.5*max(diffPulse); %  for m1 +- 0.2, fpr m122 +- 2
+
+posPulseIdx = diffPulse > pulseThreshold;
+negPulseIdx = diffPulse < -pulseThreshold;
 
 
 selPosPulseIdx  = find(posPulseIdx~=0);
