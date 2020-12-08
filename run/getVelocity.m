@@ -1,67 +1,19 @@
-function [vel] = getVelocity(analogin, varargin)
-% This function is designed to get the continous velocity in cm/s from the
-% analogin.dat file. 
-%
-%   USAGE
-%
-%   %% Dependencies %%%
-%
-%
-%   INPUTS
-%   'analogin'  - output from getAnaloginVals.m
-%   
-%
-%   OUTPUTS
-%   vel
-%   .vel_cm_s    -
-%   .time        -
-%   .dt          -
-%
-%
-%   HISTORY
-%   2020/09 Lianne documented and proofed this function
-%
-%   TO-DO
-%   - Make sure this works with digitalin as well?
-%   - Make it so the function detects whether the wheel is going from plus
-%   to minus or vice versa
-%   - Normalize wheel trials so thresholding will be more uniform
+function [vel_cm_s, time, dt] = getVelocity(analogin, params, basename);
 
-%% Parse
+pos = analogin.pos;
+time = analogin.ts;
 
-if ~exist('basepath','var')
-    basepath = pwd;
-end
-
-basename = bz_BasenameFromBasepath(basepath);
-
-
-p = inputParser;
-addParameter(p,'downsampleFactor',300,@isnumeric);
-addParameter(p,'circDisk',2*pi*26,@isnumeric);
-addParameter(p,'doFigure',false,@islogical);
-
-parse(p,varargin{:});
-downsampleFactor    = p.Results.basename;
-circDisk            = p.Results.circDisk;
-doFigure            = p.Results.doFigure;
-
-cd(basepath)
-
-
-%%
-pos     = analogin.pos;
-time    = analogin.ts;
-
-pos = downsample(pos, downsampleFactor);
-time = downsample(time,downsampleFactor);
+opts.downsampleFactor = 300;
+pos = downsample(pos, opts.downsampleFactor);
+% pos = movmean(pos,10); ;%nb hardcoded
+time = downsample(time,opts.downsampleFactor);
 
 pos_scaled = pos-min(pos);
-pos_in_cm =  pos_scaled*(circDisk)/max(pos_scaled);
+pos_in_cm =  pos_scaled*(params.circDisk)/max(pos_scaled);
 
 % additive positions (roll-out-the-wheel)
-thr_diff    = 10*std(pos);
-allidx      = find(abs(diff(pos_in_cm))> thr_diff); 
+thr_diff = 10*std(pos)
+allidx = find(abs(diff(pos_in_cm))> thr_diff); 
     
 % If wheel goes positive to negative (FLIP PLOT) -- RB 11/13/20
     if regexp(basename, 'mouse')
@@ -93,39 +45,32 @@ allidx      = find(abs(diff(pos_in_cm))> thr_diff);
             end
         end
     end 
-
+figure
+subplot(4,1,1), plot(time, pos)
+xlim([0 4500])
+title('Raw')
+subplot(4,1,2) ,plot(time,pos_in_cm)
+xlim([0 4500])
 vel_cm = diff(pos_in_cm);
+title('cumulative pos')
+subplot(4,1,3),plot(time(2:end), vel_cm)
+xlim([0 4500])
+title('vel_cm')
+
 
 dt =time(2)-time(1);%1/30000; %of
 
 vel_cm_s = vel_cm/dt;
 vel_cm_s = movmean(vel_cm_s,10000); %1000000
-% % %
 
-if doFigure
-    figure
-    subplot(4,1,1), plot(time, pos)
-    xlim([0 4500])
-    title('Raw')
-    subplot(4,1,2) ,plot(time,pos_in_cm)
-    xlim([0 4500])
-    title('cumulative pos')
-    subplot(4,1,3),plot(time(2:end), vel_cm)
-    xlim([0 4500])
-    title('vel_cm')
-    subplot(4,1,4),plot(time(2:end),vel_cm_s)
-    xlim([0 4500])
-    title('vel_cm_s')
-    % pause
-    % close
-end
-
-vel.vel_cm_s = vel_cm_s;
-vel.time = time;
-vel.dt = dt;
+subplot(4,1,4),plot(time(2:end),vel_cm_s)
+xlim([0 4500])
+title('vel_cm_s')
 
 end
 
+%params.radiusDisk   = 26;
+% params.circDisk     = 2*pi*params.radiusDisk;
 
 %% Reagan Version (doesn't account for cycle of wheel going from total circumference to 0
 %   Get Velocity
@@ -136,8 +81,7 @@ end
 %         rad_disk = 26; %cm
 %         circum_disk = 163.3628; %(2*pi*r) cm
 %         load([session_name '_analogin.mat']);
-%     % downsample 30000ms to 1 second (oh yes) % Reagan this should be
-%     30000 samples per second to 1 sample per second. 
+%     % downsample 30000ms to 1 second (oh yes)
 %         ds_analogin_pos = analogin.pos(1:30000:length(analogin.pos)); %analogin once every second
 %         
 %                 %plot for reference to see downsampling effect

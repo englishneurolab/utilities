@@ -4,13 +4,15 @@ pulse = analogin.pulse;
 ts = analogin.ts;
 
 %% Finding depolarizations over time
+ selPosPulseIdx = [];
+ selNegPulseIdx= [];
 
 diffPulse = diff(pulse);
 
 % right now this value differs per session and that's not good see if
 % implementation of SD criteria
 
-pulseThreshold = 2; %0.3;%1;%.5*max(diffPulse); %  for m1 +- 0.2, fpr m122 +- 2
+pulseThreshold = 0.15; %0.15 %2 0.3;%1;%.5*max(diffPulse); %  for m1 +- 0.2, fpr m122 +- 2
 
 posPulseIdx = diffPulse > pulseThreshold;
 negPulseIdx = diffPulse < -pulseThreshold;
@@ -32,21 +34,21 @@ for i = 1:length(selNegPulseIdx)-1
     end
 end
 
-doubleIndPos = [];
-doubleIndNeg = [];
-
-for i = 1:length(selPosPulseIdx)-1
-    if selPosPulseIdx(i+1) - selPosPulseIdx(i) < 10000 % want dat is 0.333 seconden)
-        countPos = countPos+1;
-        doubleIndPos(countPos) = selPosPulseIdx(i+1); 
-    end
-end
-
-
-delIndxPos = find(ismember(selPosPulseIdx,doubleIndPos));
-delIndxNeg = find(ismember(selNegPulseIdx,doubleIndNeg));
- selPosPulseIdx(delIndxPos) = [];
- selNegPulseIdx(delIndxNeg) = [];
+% doubleIndPos = [];
+% doubleIndNeg = [];
+% 
+% for i = 1:length(selPosPulseIdx)-1
+%     if selPosPulseIdx(i+1) - selPosPulseIdx(i) < 10000 % want dat is 0.333 seconden)
+%         countPos = countPos+1;
+%         doubleIndPos(countPos) = selPosPulseIdx(i+1); 
+%     end
+% end
+% 
+% 
+% delIndxPos = find(ismember(selPosPulseIdx,doubleIndPos));
+% delIndxNeg = find(ismember(selNegPulseIdx,doubleIndNeg));
+%  selPosPulseIdx(delIndxPos) = [];
+%  selNegPulseIdx(delIndxNeg) = [];
 
 
 pulseEpochs     = [ts(selPosPulseIdx+1)' ts(selNegPulseIdx+1)']; % +1 , because diff % pulse Time

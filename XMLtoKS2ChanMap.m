@@ -1,4 +1,4 @@
-function XMLtoKS2ChanMap(newChanMapName, elecSpaceX, elecSpaceY, shankSpaceX, probe)
+function XMLtoKS2ChanMap(basepath, varargin)
 
 % SessionInfo via XML To KS2 ChanMap for preprocessing with Kilosort2
 % Dependencies: Buzcode
@@ -6,20 +6,65 @@ function XMLtoKS2ChanMap(newChanMapName, elecSpaceX, elecSpaceY, shankSpaceX, pr
 % Make sure XML is up to date with bad channels and correct channel groups
 % If you need to check or update your details check: bz_getSessionInfo(cd,'editGUI',true)
 
-% % Inputs:
-% newChanMapName will be the name of your channelmap
-% elecSpaceX: distance between electrodes on each shank in the X direction
-% elecSpaceY: distance between electrodes on each shank in the Y direction
-% shankSpaceX: distance between shanks
-% probe: 'linear' or 'staggered'
 
+%  USAGE
+%
+%    [peth] = getPETH(basepath,<options>)
+%
+%  INPUTS
+%    
+%  Name-value paired inputs:
+%    'basepath'     - folder in which XML can be found (required, Default
+%                   is pwd)
+%   'newMapName     - str with the output name of your channelMap (Default: chanMap_new.mat
+%   'spaceX'        - distance between electrodes on each shank in the X
+%   direction. Default: 20 micron
+%   'spaceY'        - distance between electrodes on each shank in the Y
+%   direction. Default: 20 micron
+%   'spaceShank'    - distance between shanks. Default: 100 micron. 
+%   'probeType'     - 'linear' or 'staggered' (default: 'linear')
+%
+%  OUTPUT
+%
+%  EXAMPLES
+%    
+% NOTES
+% 
+%
+% TO-DO
+%
+%
+% HISTORY 
+% 2020/09/07     Lianne set up this function
+%
+
+%% Parse!
+if ~exist('basepath','var')
+    basepath = pwd;
+end
+
+basename = bz_BasenameFromBasepath(basepath);
+
+p = inputParser;
+addParameter(p,'newMapName',['chanMapNew.mat'],@isstr);
+addParameter(p,'spaceX',20,@isnumeric);
+addParameter(p,'spaceY',20,@isnumeric);
+addParameter(p,'spaceShank',100,@isnumeric);
+addParameter(p,'probeType','linear',@isstr);
+
+parse(p,varargin{:});
+newMapName  = p.Results.newMapName;
+spaceX      = p.Results.spaceX;
+spaceY      = p.Results.spaceY;
+spaceShank  = p.Results.spaceShank;
+probeType   = p.Results.probeType;
 
 %% Set parameters for shank
 % This is assuming same layouts per Shank:
 
-interElectrodeSpacingX = elecSpaceX;
-interElectrodeSpacingY = elecSpaceY;
-interShankSpacingX = shankSpaceX;
+interElectrodeSpacingX = spaceX;
+interElectrodeSpacingY = spaceY;
+interShankSpacingX = spaceShank;
 
 %probe now only takes 'linear' or 'staggered'
 
@@ -74,19 +119,16 @@ for iShank = 1:numShanks
     startX =  iShank*interShankSpacingX;
 end
 
-if strcmpi(probe,'linear')
+if strcmpi(probeType,'linear')
     xcoords = vecElecX;
     ycoords = vecElecY;
     
-elseif strcmpi(probe,'staggered')
+elseif strcmpi(probeType,'staggered')
     chanOrdered = 1:numChans;
     eIdx    	=  chanOrdered/2 == round(chanOrdered/2);
     xcoords     = vecElecX;
     xcoords(~eIdx) = xcoords(eIdx)+ interElectrodeSpacingX;
     ycoords     = vecElecY;
-    
-else
-    fprintf('probe not recognized, choose ''linear'' or ''staggered'' \n')
 end
 
 
@@ -94,4 +136,4 @@ end
 
 
 
-save([newChanMapName '.mat'], 'chanMap','chanMap0ind','connected','kcoords','xcoords','ycoords')
+save([newMapName '.mat'], 'chanMap','chanMap0ind','connected','kcoords','xcoords','ycoords')
