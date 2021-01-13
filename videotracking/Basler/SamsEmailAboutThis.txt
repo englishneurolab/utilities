@@ -1,0 +1,61 @@
+Hello,
+
+This should be all the required scripts to get you from Intan + basler camera to synced video and files ready to be run in kilosort
+
+There is always a balance between how much to automate and I have found that these early preprocessing steps are variable enough that it is worth visualizing these steps for quality control, you may come to a different conclusion.
+
+Anyways, the main script is Intan2Kilo which does several things
+
+1) it renames the files for my standard nomenclature (lines 1 - 139)
+
+to input it must be named like this
+
+(top dir) subjectName_date
+   (sub dir1, this is the name out the default Intan output) subjectName_date_time
+                -amplifier.dat
+                - avi videos
+                -etc
+ (sub dir2) subjectName_date_time
+                -amplifier.dat
+                - avi videos
+                -etc
+
+
+
+if you have multiple subdirectoris in the top directory, the files will be concatanated in the order of the time they were recorded. my concat scripts are written for Linux, so you may have to rewrite this
+
+
+2) Next, I define stimulation epochs and set up my analogin XML (lines 140 - 150), this is also written for Linux
+i have a default event file (FMA standard) which is named basname.evt.sti where I define the start and end of my stimulations.  I do this manually to be sure that the stimulations are being recorded and the session makes sense. if I give pulses then I define the start/stop of my stim epochs with "pulse_on" and "pusle_off" , if I gave Gaussians or sines, then the even detection is a bit different and so I use "sine_on" and "sine_off" to define this blocks.  
+
+3) Next I detect my stimulations, this requires  basname.evt.sti and for you to have made an XML file for you baesname_analogin.dat 
+here you have a couple of thresholds thres1 = what the pulse amplitude must be bigger than, thres 2 is the noise level for signs waves.  the variable input 'ch' is the channel (base 1) for which the control signal is saved in the analogin, this will generate two output event files
+a) basename.evt.ait = which is an FMA event file (text file) listing [ stimTime stimType stimChannel]
+b) basename.evt.aip = which is an FMA event file (text file) listing [stimTime stimType pulse amplitude]
+ 
+4) Next I extract the position (what you asked for) Lines 168 - 193
+This I do in several steps and you can make this much better as I did it piecemeal as I needed. I synchronize the data in two ways: with a blinking LED and with a TTL pulse captured into the Intan's digital in file.  The issue is that the the system can capture a TTL pulse without recording a video frame and this always happens since when you turn off the Basler video a couple of extra frame are always snapped but not recorded. So, the blinking LED, I use a random inter-blink interval so every epoch can be uniquely aligned in case a chunk of data is dropped and I need to align.  This I have a control signal that I split and input into another Intan digital in channel.  I relay exclusively on this, but I save both.
+
+ So first I need to extrac the red and blue LED location for each frame 
+'ApproxMedianFilter_custom'
+
+this will give you a pop-up where you first define the ROI (track) click on the frame and press 'defineMaze', then it will pop up again and you cen define a region where you don't want to track, press 'defineMaze',  and then slide a threshold bar for when you just see the light and not any background reflections and close the window.  once you do all of this it will (slowly) run through each frame ans save an output mat file (LED_position-01.mat')  if you have multiple avis, you only need to do this once per day.  if you are good about keeping the track in the same position and the lights at the same birghtness, you can hardcode these things and  this step can likely be autmoated.
+
+5) now you need to alig Line 194-297
+
+Now you need to get the blinking LED.  It would be great if this were combined in the previous script and I would be very grateful if you did this actually since it doubles the processing time.  In any event, you repeate the process as above, define the ROI for the LED, define and exclusion ROI, set threshold , and go.  Sometimes you get a random frame where the LED isn't on, the threshold can be very high.
+
+Now I extract the TTL pulse of the LED (line 220 -238)
+
+
+Then I load everything and make sure that the pulses saved in the Intan match the number of blinking LEDs.  What if they don't?  This can happen if: you have the light blinking and the camera recording without the Intan on -DONT DO THIS. This will this will be a headache for you to try to figure out which video frames to drop. You will not lose the data, but you are giving yourself more work.
+
+6) if everything is synced, then I linearize the position and define trials for a linear track (298-eof)
+
+for linearizePositionTrack.m there are two manual steps, 1) define where the track is, and 2) define the bounds around the track for which the tracking data should be considered.
+
+then it saves the data into a position file (position_info.mat) which I exclusively use later on.
+
+let me know if you miss any dependencies 
+
+good luck!

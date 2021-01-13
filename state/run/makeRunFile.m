@@ -1,3 +1,7 @@
+%% Makes EVT.RUN from runEpochs
+
+
+
 numeventtypes = 2;
 runbaseName = [basename '.evt.run']; % you need the ROX bc neuroscope is buggy and uses this to parse files.
 

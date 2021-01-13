@@ -1,4 +1,4 @@
-function [runEpochs, runIdx] = getRunEpochs(basepath,vel,varargin);
+function [run] = getRunEpochs(basepath,vel,varargin);
 % This function is designed to get the continous velocity in cm/s from the
 % analogin.dat file.
 %
@@ -15,16 +15,20 @@ function [runEpochs, runIdx] = getRunEpochs(basepath,vel,varargin);
 %   runEpochs
 %   runIdx
 %
+%   EXAMPLE
+%   [run] = getRunEpochs(basepath,vel,'minRunSpeed',1.5,'saveMat','false')
 %
 %   HISTORY
 %   2020/09 Lianne documented and proofed this function
 %   2020/11 Reagan edit 
+%   2020/12 Lianne verify and edit
+%
 %
 %   TO-DO
-%   - Make sure this works with digitalin as well?
 %   - Make it so the function detects whether the wheel is going from plus
 %   to minus or vice versa
 %   - Normalize wheel trials so thresholding will be more uniform
+%   - Add a minRunLength?
 %%
 
 if ~exist('basepath','var')
@@ -37,11 +41,14 @@ p = inputParser;
 addParameter(p,'basename',basename,@isstr);
 addParameter(p,'saveMat',true,@islogical);
 addParameter(p,'minRunSpeed',[],@isnumeric);
+addParameter(p,'saveAs','.run.states.mat',@isstr);
+
 
 parse(p,varargin{:});
 basename        = p.Results.basename;
 saveMat         = p.Results.saveMat;
 thr             = p.Results.minRunSpeed;
+saveAs          = p.Results.saveAs;
 
 cd(basepath)
 
@@ -81,7 +88,6 @@ else
     runEpochs = [NaN NaN];
     runIdx = [NaN NaN];
 end
-end
 %%
 
 % for backward compatibility with current code
@@ -90,8 +96,8 @@ run.index = runIdx;
 
 % for compatibility with buzcode
 run.ints.run = run.epochs;
-run.detectorinfo.detectorname = 'getRunEpochs.m'
-run.detectorinfo.detectionparms.minRunSpeed = minRunSpeed;
+run.detectorinfo.detectorname = 'getRunEpochs.m';
+run.detectorinfo.detectionparms.minRunSpeed = thr;
 run.detectorinfo.detectiondate = today('datetime');
 
 % run.idx.states = %[t x 1] vector giving the state at each point in time
@@ -101,10 +107,10 @@ run.detectorinfo.detectiondate = today('datetime');
 
 if saveMat
     % Check if file exists:
-    frun = [basename '.run.states.mat'];
+    frun = [basename saveAs];
     
     if exist(frun,'file')
-        overwrite = input([basename,'.run.states.mat already exists. Overwrite? [Y/N] '],'s');
+        overwrite = input([basename, saveAs ' already exists. Overwrite? [Y/N] '],'s');
         switch overwrite
             case {'y','Y'}
                 delete(frun)
@@ -115,5 +121,7 @@ if saveMat
         end
     end
     
-    save([basename '.run.states.mat.mat'],'run')
+    save([basename saveAs],'run')
 end
+end
+
