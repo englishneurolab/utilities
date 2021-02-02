@@ -1,3 +1,5 @@
+% Script to get running epochs for all sessions 
+
 for iSess = sessions
 cd(dirN{iSess})
 basepath = cd; basename = bz_BasenameFromBasepath(cd);

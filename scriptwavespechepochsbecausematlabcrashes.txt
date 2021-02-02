@@ -1,0 +1,71 @@
+function [wavespec_epochs] = getWaveSpecEpochs(basepath, wavespec, epochs, varargin);
+% This function is designed to get the continous velocity in cm/s from the
+% analogin.dat file. 
+%
+%   USAGE
+%
+%   %% Dependencies %%%
+%
+%
+%   INPUTS
+%   basepath  - out
+%   wavespec - output bz_WaveSpec
+%   epochs    -
+%
+%   Name-value pairs
+%   'timMS'        - Default: 1000
+%
+
+%   OUTPUTS
+%   wavespec epochs
+%   .data    -
+%   .timestamps        -
+%   .freqs          -
+%   .nfreqs
+%   .samplingRate   
+%   .channels
+%   .filterparms
+%
+%   EXAMPLES
+%   
+%
+%   HISTORY
+%   2020/12 Lianne documented and proofed this function
+%
+%   TO-DO
+%  
+
+timMS = 1000;
+ops.tw_ws = timMS * wave.samplingRate/1000; %ms
+ops.bl_ws = ops.tw_ws*2;
+
+freqRange = [1 40];
+numFreqs = freqRange(end)-freqRange(1)*2;
+
+
+lfp_time =[];
+lfp_data = [];
+countRuns = 0;
+for iRun = 1:length(selRunEpochs)
+    selRunStartIdx = selRunIdx(iRun,1);
+    %nb this is to exclude first or last epoch that might fall outside the
+    %window of interest)
+    if abs(selRunStartIdx-ops.tw_ws) == selRunStartIdx-ops.tw_ws
+        countRuns = countRuns + 1;
+        %       if abs(lfp.timestamps(selRunStart)-ops.bl_ws) == lfp.timestamps(selRunStart)-ops.bl_ws
+        lfp_time(:,countRuns) = lfp.timestamps(selRunStartIdx-ops.tw_ws:selRunStartIdx+ops.tw_ws);
+        lfp_data(:,countRuns) = lfp.data(selRunStartIdx-ops.tw_ws:selRunStartIdx+ops.tw_ws);
+    end
+    
+end
+
+
+
+lfp_forWS.data = lfp_data;
+lfp_forWS.timestamps = lfp_time;
+lfp_forWS.samplingRate= 1250;
+
+ws_temp         = bz_WaveSpec(lfp_forWS,'frange',freqRange,'nfreqs',numFreqs,'space','lin');
+ws_temp.data    = abs(ws_temp.data);
+ws_reshaped     = reshape(ws_temp.data,[length(ws_temp.timestamps),ws_temp.nfreqs,countRuns]);
+wavespec_avg    = mean(ws_reshaped,3);

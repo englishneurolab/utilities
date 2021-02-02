@@ -32,9 +32,9 @@ function [peth] = getPETH_epochs(basepath, varargin)
 
 %
 %  EXAMPLES
-%  [peth] = getPETH(basepath,'epochs',pulseEpochs,'timwin',[-0.4 0.4], ...
+%  [peth] = getPETH_epochsbasepath,'epochs',pulseEpochs,'timwin',[-0.4 0.4], ...
 %               'binSize', 0.01, 'saveAs', '.pethPulse.mat')
-%  [peth] = getPETH(basepath,'saveMat',false)  
+%  [peth] = getPETH_epochs(basepath,'saveMat',false)  
 %   
 %    
 % NOTES
@@ -108,12 +108,13 @@ for iUnit = 1:length(spikes.times)
     
     peth.rate(iUnit,:)   = rateHisto;
     peth.count(iUnit,:)  = countHisto;
-    
+    peth.trials{iUnit}   = spikeTrl;
 end
 
 peth.timeEdges = timeEdges;
 peth.binSize = binSize;
 peth.timwin  = timwin;
+
 
 if saveMat
     save([basename saveAs],'peth')
