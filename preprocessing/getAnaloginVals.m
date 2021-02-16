@@ -10,9 +10,9 @@ function [analogin] = getAnaloginVals(basepath,varargin)
 %
 %   INPUTS
 %   'basename'          - if basename is any different then parentfolder name
-%   'wheelChan'         - 0-based chan or 'none' (default: '0')
-%   'pulseChan'         - 0-based chan or 'none' (default: '3')
-%   'rewardChan'        - 0-based chan or 'none' (default: '1')
+%   'wheelChan'         - 0-based chan or 'none' (default: 0)
+%   'pulseChan'         - 0-based chan or 'none' (default: 3)
+%   'rewardChan'        - 0-based chan or 'none' (default: 1)
 %   'samplingRate'      - sampling rate of analogin.dat (default: [30000])
 %   'downsampleFactor'  - Downsample original data this many times (default: [0])
 %
@@ -24,13 +24,16 @@ function [analogin] = getAnaloginVals(basepath,varargin)
 %   .ts             -   times in seconds
 %   .sr             -   sampling rate of analogin data
 %
+%   EXMAPLE
+%   [analogin] = getAnaloginVals(basepath,'wheelChan',2,'pulseChan','none')
 %
 %   HISTORY
 %   2020/09 Lianne documented and proofed this function for analogin
 %   2020/12 Lianne added option to exclude channels by specifying them as
 %   'none'. Also the analogin channels are now 0-based inputs. 
 %
-%
+%   TO DO
+%   - Store analogin Channels 0-based index with labels 
 
 %% Parse!
 
