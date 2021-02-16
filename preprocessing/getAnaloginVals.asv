@@ -5,8 +5,7 @@ function [analogin] = getAnaloginVals(basepath,varargin)
 %
 %   USAGE
 %   
-%   %%% Dependencies %%%
-%   Must have an [basename '_analogin.xml'] file in the basepath
+%   %% Dependencies %%%
 %
 %
 %   INPUTS
@@ -30,8 +29,6 @@ function [analogin] = getAnaloginVals(basepath,varargin)
 %   2020/09 Lianne documented and proofed this function for analogin
 %   2020/12 Lianne added option to exclude channels by specifying them as
 %   'none'. Also the analogin channels are now 0-based inputs. 
-%   2021/2 Kaiser changed reading the rhd channels for loading an
-%   analogin.xml file
 %
 %
 
@@ -68,8 +65,17 @@ cd(basepath)
 
 %%
 
+rhdfilename = [basename '_info.rhd'];
+
+if exist(rhdfilename,'file')
+    read_Intan_RHD2000_file_noprompt(rhdfilename)
+else
+    read_Intan_RHD2000_file_noprompt('info.rhd')
+end
+
 xml = LoadXml([basename '_analogin.xml']);
 
+analogin_file   = [basename, '_analogin.dat'];
 num_channels    = xml.nChannels; % ADC input info from header file
 fileinfo        = dir([basename '_analogin.dat']);
 num_samples_perChan     = fileinfo.bytes/(num_channels * 2); % uint16 = 2 bytes
