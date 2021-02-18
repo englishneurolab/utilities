@@ -24,7 +24,7 @@ function pyrLayer = getPyrLayerFromRipples(basepath,varargin')
 %
 %
 %   TO-DO
-%
+%   - Calculate this per Anatom Group (Shank)
 %
 
 %% Parse!
@@ -39,6 +39,10 @@ basename = bz_BasenameFromBasepath(basepath);
 p = inputParser;
 addParameter(p,'basename',basename,@isstr);
 addParameter(p,'saveMat',true,@islogical);
+
+parse(p,varargin{:});
+basename        = p.Results.basename;
+saveMat         = p.Results.saveMat;
 
 cd(basepath)
 
@@ -55,18 +59,17 @@ ycoords = rez.ycoords;
 %% Calculate PYR layer over ripples
 
 %% Check if Channel is the same as determined by lamina
+
 selRipples = [1:200, length(ripples.timestamps)-200:length(ripples.timestamps)];
-[pkValmaxInd, pkIndmaxInd,ripSnip] = findRippleLayerChan(basepath, 'selRipples',selRipples);
+[peakRipChan] = findRippleLayerChan(basepath, 'selRipples',selRipples);
 
-[~,r] = max(pkValmaxInd);
-
-
-mode(r)
+if peakRipChan.channel == ripChanOriginal
+ fprintf('Yay, you correctly eyeballed the max rip channel')
 [v,i] = sort(ycoords); % 1-indexed
-chanMap(i);
+rez.ops.chanMap(i);
 
 
-% Recalculate Ripples if necessary
+%% Recalculate Ripples if necessary
 
 
 
