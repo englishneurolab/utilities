@@ -19,6 +19,7 @@ function STP = ShortTermPlasticity_axax(basepath,varargin)
 %   Name-value pairs:
 %   'basename'  - only specify if other than basename from basepath
 %   'saveMat'   - saving the results to [basename,
+%                   '.burstMizuseki.analysis.mat']
 %   'saveAs'    - if you want another suffix for your save
 %
 %   OUTPUTS
@@ -214,5 +215,3 @@ for i = 1:length(mono_res) % uncommented, lianne
     save([basename  '.STP.mat'], 'STP')
 end
 
-
-%                   '.burstMizuseki.analysis.mat']
