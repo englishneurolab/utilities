@@ -1,0 +1,5 @@
+plot firing rate boxplots
+plot heatmaps
+plot PETH
+plot phasemaps
+plot rippleCCGs

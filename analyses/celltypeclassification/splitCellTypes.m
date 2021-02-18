@@ -25,6 +25,7 @@ function [pyrs, ints, aacs] = splitCellTypes(basepath)
 %
 %   TO-DO
 %   - maybe add an session.analysisTags for Opto ChR or Arch, considering the new animals are both ChR and Arch
+%     - This is currently hardcoded 
 %   - Move stats + getRatesTrialsBaseStim into the AAC functions   
 %
 %   HISTORY

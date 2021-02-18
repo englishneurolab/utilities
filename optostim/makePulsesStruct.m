@@ -1,5 +1,51 @@
 function [pulses] = makePulsesStruct(basename,pulseEpochs)
+% This function is designed to 
+%
+%   USAGE
+%
+%   %% Dependencies %%%
+%   
+%   INPUTS
+%   basepath    - path in which spikes and optostim structs are located
+%
+%   Name-value pairs:
+%   'basename'  - only specify if other than basename from basepath
+%   'saveMat'   - saving the results to 
+%   'saveAs'    - if you want another suffix for your save
+%
+%   OUTPUTS
+%   
+%   
+%   EXAMPLE
+%   
+%   
+%   HISTORY
+%
+%   
+%   TO-DO
 
+
+%% Parse!
+
+if ~exist('basepath','var')
+    basepath = pwd;
+end
+
+basename = bz_BasenameFromBasepath(basepath);
+
+
+p = inputParser;
+addParameter(p,'basename',basename,@isstr);
+addParameter(p,'saveMat',true,@islogical);
+
+
+parse(p,varargin{:});
+basename        = p.Results.basename;
+saveMat         = p.Results.saveMat;
+
+%%
+
+cd(basepath)
 pulses.timestamps  = pulseEpochs;
 pulses.peaks = (pulseEpochs(:,2)-pulseEpochs(:,1))/2;
 pulses.amplitude = [];

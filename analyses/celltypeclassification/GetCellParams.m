@@ -1,35 +1,75 @@
 function GetCellParams(basepath)
+% This function is designed to 
+%
+%   USAGE
+%
+%   %% Dependencies %%%
+%   
+%   INPUTS
+%   basepath    - path in which spikes and optostim structs are located
+%
+%   Name-value pairs:
+%   'basename'  - only specify if other than basename from basepath
+%   'saveMat'   - saving the results to [basename,
+%                   '.burstMizuseki.analysis.mat']
+%   'saveAs'    - if you want another suffix for your save
+%
+%   OUTPUTS
+%   
+%   EXAMPLE
+%   
+%   HISTORY
+%
+%   TO-DO
+%   - Check how to integrate with CellMEtrics from Peter
+%   - Replace CrossCorr for buzcodes CCG?
+%
+%% Parse!
+
+if ~exist('basepath','var')
+    basepath = pwd;
+end
+
 basename = bz_BasenameFromBasepath(basepath);
+
+
+p = inputParser;
+addParameter(p,'basename',basename,@isstring);
+addParameter(p,'saveMat',false,@islogical);
+addParameter(p,'saveAs','_CellParams.mat',@isstring);
+
+parse(p,varargin{:});
+
+basename        = p.Results.basename;
+saveMat         = p.Results.saveMat;
+saveAs          = p.Results.saveAs;
+
+cd(basepath)
+
 %% import spike data and get ACGs/ CCGs
 
-spikes= bz_GetSpikes('basepath',basepath,'saveMat',true,'forceReload',false);
-
-mono_res = bz_GetMonoSynapticallyConnected(basepath,'plot',false);
+spikes      = bz_GetSpikes;%('basepath',basepath,'saveMat',true,'forceReload',false);
+mono_res 	= bz_GetMonoSynapticallyConnected(basepath,'plot',false);
 
 
 %waveforms = LoadSpikeWaveforms(fil,length(xml.SpkGrps(i).Channels),xml.SpkGrps(i).nSamples;
 
 %% find ripples and extract PETH
 
-%rip_inf = bz_FindRipples(pwd, 51, 'noise', 120, 'threshold', [1 3]); % change channels and threshold accordingly!!!
+% Load Ripples
+% if ripples doesn't exist make a ripple struct thingie?
+% else
+load([basename '.ripples.events.mat'])
+% end
 
 
+rip_ts  = ripples.peaks ;
+rip_st  = ripples.timestamps(:,1);
+rip_end = ripples.timestamps(:,2);
 
-ripFil = [basepath '/' basename '.evt.rip'];
-LFPFil = [basepath '/' basename '.lfp'];
-
-if exist(ripFil)
-rip_evs = LoadEvents(ripFil);
-
-
-rip_ts = rip_evs.time(cellfun(@any,regexp(rip_evs.description,'peak')));
-
-rip_st = rip_evs.time(cellfun(@any,regexp(rip_evs.description,'start')));
-
-rip_end = rip_evs.time(cellfun(@any,regexp(rip_evs.description,'stop')));
-
-loner = rip_st(diff([0;rip_st])>.5);
+loner = rip_st(diff([0;rip_st])>.5); % select long ripples? what are we doing here
 rip_peth = [];
+
 for i = 1:length(spikes.times)
 rip_peth(i,:) = CrossCorr(loner,spikes.times{i},.01,100);
 end
@@ -62,7 +102,7 @@ for i=1:length(spikes.times)
 end
 %% get cluster quality
 
-cluster = getClusterQuality(basepath); 
+cluster = getClusterQuality(basepath);  % maybe through cellexplorer?
 
 %% save parameters into a structure
 
@@ -108,7 +148,8 @@ end
     
 
 %% save
-save([basepath filesep  basename '_CellParams.mat'],'CellParams','mono_res');
+if saveMat
+    save([basepath filesep basename saveAs],'CellParams','mono_res');
 
 
 

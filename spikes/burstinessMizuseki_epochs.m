@@ -17,7 +17,7 @@ function burstIndex = burstinessMizuseki_epochs(basepath,varargin)
 %
 %   Name-value pairs:
 %   'basename'  - only specify if other than basename from basepath
-%   'proximityBurstSpikes' - ISI used for defining a burst (default: 0.006 (6ms bursts))
+%   'burstISI' - ISI used for defining a burst (default: 0.006 (6ms bursts))
 %   'saveMat'   - saving the results to [basename,
 %                   '.burstMizuseki.analysis.mat']
 %   'saveAs'    - if you want another suffix for your save
@@ -43,7 +43,6 @@ function burstIndex = burstinessMizuseki_epochs(basepath,varargin)
 %   TO-DO
 %   - savePath
 %
-%  % hahaha
 %%
 if ~exist('basepath','var')
     basepath = pwd;
@@ -57,7 +56,7 @@ addParameter(p,'basename',basename,@isstr);
 addParameter(p,'saveMat',true,@islogical);
 addParameter(p,'epochs',[],@isnumeric);
 addParameter(p,'epochName',[], @isstr);
-addParameter(p,'proximityBurstSpikes', 0.006, @isnumeric);
+addParameter(p,'burstISI', 0.006, @isnumeric);
 addParameter(p,'saveAs','.burstMizuseki.analysis.mat',@isstr);
 addParameter(p,'optoExcl',true,@islogical);
 
@@ -68,7 +67,7 @@ saveMat         = p.Results.saveMat;
 epochs          = p.Results.epochs;
 saveAs          = p.Results.saveAs;
 epochName       = p.Results.epochName;
-proximBurstSpks = p.Results.proximityBurstSpikes;
+burstISI        = p.Results.burstISI;
 
 cd(basepath)
 %%
@@ -82,7 +81,7 @@ spikes = bz_LoadPhy;
 if optoExcl
     if exist([ basename '.optoStim.manipulation.mat'],'file')
         load([ basename '.optoStim.manipulation.mat'],'optoStim')
-        
+
         % Get spikes outside of the optostim
         [status_opto ,~ , ~ ] = cellfun(@(a) InIntervals(a,optoStim.timestamps),...
             spikes.times,'UniformOutput', false);
@@ -120,7 +119,7 @@ end
 % Calculate for spikes outside the specified epochs
 for iUnit = 1:length(spkTimOutEpochs)
     for jj = 2:length(spkTimOutEpochs{iUnit})-1
-        bursty(jj) =  any(diff(spkTimOutEpochs{iUnit}(jj-1 : jj + 1)) < proximBurstSpks);
+        bursty(jj) =  any(diff(spkTimOutEpochs{iUnit}(jj-1 : jj + 1)) < burstISI);
     end
     burstIndexOUT(iUnit) = length(find(bursty > 0))/length(bursty);
 end
@@ -129,7 +128,7 @@ end
 for iUnit = 1: length(spkTimInEpochs)
     bursty =[];
     for jj = 2:length(spkTimInEpochs{iUnit})-1
-        bursty(jj) =  any(diff(spkTimInEpochs{iUnit}(jj-1 : jj + 1)) < proximBurstSpks);
+        bursty(jj) =  any(diff(spkTimInEpochs{iUnit}(jj-1 : jj + 1)) < burstISI);
     end
     burstIndexIN(iUnit) = length(find(bursty > 0))/length(bursty); % Fraction of spikes ...
     % with a ISI for following or preceding spikes < 0.006
@@ -151,4 +150,3 @@ end
 
 
 end
-

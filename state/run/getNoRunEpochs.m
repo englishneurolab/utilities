@@ -1,4 +1,4 @@
-function norun = getNoRunEpochs(basepath,run)
+function norun = getNoRunEpochs(run)
 
 % This function
 %
