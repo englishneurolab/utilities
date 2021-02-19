@@ -25,8 +25,8 @@ Chans.Dig.pulse     = nan;
 Chans.Analog.pos    = 1;
 Chans.Analog.reward = nan;
 Chans.Analog.pulse  = nan
-Chans.ripchan       = 52;
-Chans.SWchan        = 51;
+Chans.ripchan       = 38;
+Chans.SWchan        = 61;
 
 save([basename '.Chans.mat'], 'Chans')
 
@@ -104,9 +104,13 @@ session = sessionTemplate(cd,'showGUI',true);
 % Crtl+I - forces use of the .xml probe layout
 % if you have a "Kilosort" folder make sure the relatilve path in the
 % session info has \Kilosort
+load('Chanmap_H3_Acute.mat')
+chanCoords.x = xcoords;
+chanCoords.y(session.extracellular.electrodeGroups.channels{1}) = ycoords;
+
+save([basename '.chanCoords.channelInfo.mat'], 'chanCoords')
 
 cell_metrics = ProcessCellMetrics('session', session);
-
 
 cell_metrics = CellExplorer('metrics',cell_metrics);
 % now cell_metrics is finished and ready to be worked with
