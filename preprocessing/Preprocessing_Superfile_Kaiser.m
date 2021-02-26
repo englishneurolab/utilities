@@ -51,7 +51,7 @@ bz_LFPfromDat
 %%%%%%%%%%%%%%%%%%%%%%%
 
 ripples = bz_FindRipples(cd,Chans.ripchan,'durations',[50 150],...
-    'thresholds',[1 2], 'passband',[100 250], 'EMGThresh', 0.95,'saveMat',true);
+    'thresholds',[1 2], 'passband',[100 250], 'EMGThresh', 0.8,'saveMat',true);
 
 makeRipFile
 
@@ -95,25 +95,7 @@ vel = getVelocity(analogin);
 
 spikes = bz_LoadPhy
 
-%%
-%%%%%%%%%%%%%%%%%%%%%%%
-% % % Cell Metrics
-%%%%%%%%%%%%%%%%%%%%%%%
-% this is where the true metadata for the recording is kept
-session = sessionTemplate(cd,'showGUI',true);
-% Crtl+I - forces use of the .xml probe layout
-% if you have a "Kilosort" folder make sure the relatilve path in the
-% session info has \Kilosort
-load('Chanmap_H3_Acute.mat')
-chanCoords.x = xcoords;
-chanCoords.y(session.extracellular.electrodeGroups.channels{1}) = ycoords;
 
-save([basename '.chanCoords.channelInfo.mat'], 'chanCoords')
-
-cell_metrics = ProcessCellMetrics('session', session);
-
-cell_metrics = CellExplorer('metrics',cell_metrics);
-% now cell_metrics is finished and ready to be worked with
 
 %%
 %%%%%%%%%%%%%%%%%%%%%%%
@@ -123,9 +105,8 @@ cell_metrics = CellExplorer('metrics',cell_metrics);
 rejectChannels = [];
 
 EMGFromLFP = bz_EMGFromLFP(cd)
-SleepState = SleepScoreMaster(cd,'overwrite', true, ...
-    'rejectChannels', rejectChannels)% exclude the times of stimulation
-
+SleepState = SleepScoreMaster(cd,'rejectChannels', rejectChannels)% exclude the times of stimulation
+%%
 % make input struct for the state editor (analogin motion)
 basename = bz_BasenameFromBasepath(cd)
 lfp = bz_GetLFP([58 Chans.ripchan 5]) % top channel, best rip chan, bottom channel only do 3 channels
@@ -143,7 +124,33 @@ clear lfp
 TheStateEditor(basename, inputData) % this is the manual state editor, use to check the automation of the sleepscoremaster
 % for troublshooting with Lianne
 % inputData.motion = downsample(analogin.pos,30000)
+
+
+delete([basename '.SleepStateEpisodes.states.mat'])
+
 inputData.motion(end) = []; % delete basename.eegstates.mat before rerunning the editor
 save([basename '_inputData.mat'], 'inputData')
+
+
+
+%%
+%%%%%%%%%%%%%%%%%%%%%%%
+% % % Cell Metrics
+%%%%%%%%%%%%%%%%%%%%%%%
+% this is where the true metadata for the recording is kept
+session = sessionTemplate(cd,'showGUI',true);
+% Crtl+I - forces use of the .xml probe layout
+% if you have a "Kilosort" folder make sure the relatilve path in the
+% session info has \Kilosort
+load('Chanmap_H3_Acute.mat')
+chanCoords.x = xcoords;
+chanCoords.y(session.extracellular.electrodeGroups.channels{1},1) = ycoords;
+
+save([basename '.chanCoords.channelInfo.mat'], 'chanCoords')
+
+cell_metrics = ProcessCellMetrics('session', session);
+
+cell_metrics = CellExplorer('metrics',cell_metrics);
+% now cell_metrics is finished and ready to be worked with
 
 
