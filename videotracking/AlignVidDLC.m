@@ -13,20 +13,27 @@ function Vtracking = AlignVidDLC(basepath,varargin)
 %
 % Input
 %    'basepath' - Basepath for the recording file with the DLC output
-%               (Default = cd)
+%                 (Default = cd)
 %    'syncChan' - Analogin channel that has the sync light pulses
 %    'fType'    - File type from your recording (Default = 'analogin')
 %               - Options -
 %                 - 'digitalin'
 %                 - 'analogin'
-%    'numIPIs'  - Number of interpulse intervals (IPIs) to align to to make
-%               sure you are correctly aligning to the right position
-%               (Default = 3)
+%    'numIPIs'  - Number of additional interpulse intervals (IPIs) to align
+%                 to to make sure you are correctly aligning to the right
+%                 position (Default = 3)
 %    'errWin'   - How much deviation in the interframe interval (IFI) size
-%               relative to the IPI sizes do you want to account for? (ex.
-%               if selected IFI is 43 indices and you want an error of 5
-%               the function will align the IPIs to possible IFIs of (41,
-%               42, 43, 44, 45) (Default = 5)
+%                 relative to the IPI sizes do you want to account for? (ex.
+%                 if selected IFI is 43 indices and you want an error of 5
+%                 the function will align the IPIs to possible IFIs of (41,
+%                 42, 43, 44, 45) (Default = 5) (must be an odd number)
+%    'saveMat'  - Logical of whether to save output or not (Default =
+%                 false)
+%    'vidNum'   - The number of video you want to align from this recording
+%                 (Default = [])
+%    'sanity'   - Logical if you want to check sanity check plots to make
+%                 sure you recording is accurately being aligned (Default =
+%                 true)
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -43,8 +50,9 @@ function Vtracking = AlignVidDLC(basepath,varargin)
 % Todos
 %    - Make a smoothing function or optimize DLC to not make large jumps in
 %      position
-%    - add input for number of IFIs to look over 
-%    - clean up some variable names (ex. 'a')
+%    - clean up some variable names
+%    - remove the making of un-needed information
+%    - make sanity check graphs more informative
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % History
@@ -55,6 +63,7 @@ function Vtracking = AlignVidDLC(basepath,varargin)
 % Questions for code club
 %    - Do you want to have sanity checks in this code?
 %        - Make it an input?
+%    - Is there anything you would change?
 %
 %% Parse inputs
 
@@ -63,18 +72,24 @@ addParameter(p,'syncChan',[7],@isnumeric);
 addParameter(p,'fType','analogin',@isstr);
 addParameter(p,'numIPIs',3,@isnumeric);
 addParameter(p,'errWin',5,@isnumeric);
+addParameter(p,'saveMat',false,@islogical);
+addParameter(p,'vidNum',[],@isnumeric);
+addParameter(p,'sanity',true,@islogical);
 
 parse(p,varargin{:});
 syncChan   = p.Results.syncChan;
 fType      = p.Results.fType;
 numIPIs    = p.Results.numIPIs;
 errWin     = p.Results.errWin;
+saveMat    = p.Results.saveMat;
+vidNum     = p.Results.vidNum;
+sanity     = p.Results.sanity;
 
 %% load in and unpack 
 
 basename = bz_BasenameFromBasepath(basepath);
 
-DLC = readtable([basename '_VideoTracking.csv']); % load in DLC csv
+DLC = readtable([basename '_VideoTracking' num2str(vidNum) '.csv']); % load in DLC csv
 
 %convert tables into cell arrays
 DLC = DLC{:,:};
@@ -82,7 +97,7 @@ DLC = DLC{:,:};
 %Pull out the synclight rows in to numbers
 Frames_1 = str2double(DLC(3:end,10));
 
-fName = [basename '_' fType '.dat']
+fName = [basename '_' fType '.dat'];
 
 if strcmp(fType, 'analogin')
     % load in synclight analogin channel downsampled to 100hz, convert to volts
@@ -126,11 +141,15 @@ end
 pul(:,2) = stp;
 
 %% sanity check plot (Make this a conditional input)
-% figure
-% plot(SyncChan_1)
-% hold on
-% plot(pul(:,1),SyncChan_1(pul(:,1)),'or')
-% plot(pul(:,2),SyncChan_1(pul(:,2)),'ob')
+if sanity
+
+    figure
+    plot(SyncChan_1)
+    hold on
+    plot(pul(:,1),SyncChan_1(pul(:,1)),'or')
+    plot(pul(:,2),SyncChan_1(pul(:,2)),'ob')
+
+end
 
 %% find time between pulses
 for i = 1:length(pul)
@@ -147,22 +166,22 @@ pul(:,4) = pul(:,3)/100; %convert to seconds
 
 SLFs_1 = Frames_1 > 0.9; % find the frames that definitively sync light on
 
-a = find(SLFs_1); % Store logical values
+IFI = find(SLFs_1); % Store logical values
 
-for i = 1:length(a)
-    if i == length(a)
+for i = 1:length(IFI)
+    if i == length(IFI)
         break
     else
-        a(i,2) = a(i+1,1)-a(i); % finds duration of frames the sync light is off
+        IFI(i,2) = IFI(i+1,1)-IFI(i); % finds duration of frames the sync light is off
     end
 end
 
-a(:,3) = a(:,2)/100; % duration in seconds that the sync light if off
+IFI(:,3) = IFI(:,2)/100; % duration in seconds that the sync light if off
 
 % pulls the indices that the sync light is off for more than one frame in
 % the video
-FrameInt_1 = a(:,2)>1; 
-FrameInt_1 = a(FrameInt_1,2); % creates inter frame interval (IFI)
+FrameInt_1 = IFI(:,2)>1; 
+FrameInt_1 = IFI(FrameInt_1,2); % creates inter frame interval (IFI)
 
 %% look at the over all number of IPIs that are close to the sync light
 
@@ -192,38 +211,40 @@ end
 
 % indexing all the way back from aligned IPI/IFI to the index of the start
 % of the aligned sync light pulse in the analogin
-alignDwnSmpIdx = pul(alignIPIs(find(ismember(sum(x,1),4))),1) + a(find(ismember(a(:,2), FrameInt_1),1),1); % this is the index to align to from the downsampled analogin
+alignDwnSmpIdx = pul(alignIPIs(find(ismember(sum(x,1),numIPIs + 1))),1) + IFI(find(ismember(IFI(:,2), FrameInt_1),1),1); % this is the index to align to from the downsampled analogin
 
 
 %% Sanity check alignment make optional input
 
 % now convert IFIs to match analogin indexing starting with the
 % alignDwnSmpIdx
-
+% 
 % add alignment index to IFI windows and subtract the index of the first
 % detected frame with the sync light on to fully align
 
-% alignIFIStrStp = alignDwnSmpIdx - a(1,1) + [a(find(ismember(a(:,2), FrameInt_1))) a(find(ismember(a(:,2), FrameInt_1))+1)]
-
-% figure
-% plot(SyncChan_1)
-% hold on
-% plot(pul(:,1),SyncChan_1(pul(:,1)),'or')
-% plot(pul(:,2),SyncChan_1(pul(:,2)),'ob')
-% plot(alignDwnSmpIdx,0,'ok')
-% for i = 1:length(alignIFIStrStp)
-% line([alignIFIStrStp(i,1) alignIFIStrStp(i,2)], [0 0],'linewidth', 1)
-% end
-% 
-% plot(pul(:,1),pul(:,1),'ok')
-% hold on
-% plot(alignIFIStrStp(:,1),alignIFIStrStp(:,1),'or')
-
-
+if sanity
+    alignIFIStrStp = alignDwnSmpIdx - IFI(1,1) + [IFI(find(ismember(IFI(:,2), FrameInt_1))) IFI(find(ismember(IFI(:,2), FrameInt_1))+1)];
+    
+    figure
+    plot(SyncChan_1)
+    hold on
+    plot(pul(:,1),SyncChan_1(pul(:,1)),'or')
+    plot(pul(:,2),SyncChan_1(pul(:,2)),'ob')
+    plot(alignDwnSmpIdx,0,'ok')
+    for i = 1:length(alignIFIStrStp)
+        line([alignIFIStrStp(i,1) alignIFIStrStp(i,2)], [0 0],'linewidth', 1)
+    end
+    
+    plot(pul(:,1),pul(:,1),'ok')
+    hold on
+    plot(alignIFIStrStp(:,1),alignIFIStrStp(:,1),'or')
+    
+end
 
 
 %% now align to 30,000 for first frame of the video
-align30kIDX = alignDwnSmpIdx * 300
+align30kIDX = alignDwnSmpIdx * 300;
+
 
 
 %% Make times and save
@@ -231,9 +252,26 @@ align30kIDX = alignDwnSmpIdx * 300
 
 Vtracking.xpos = str2double(DLC(3:end,2));
 Vtracking.ypos = str2double(DLC(3:end,3));
-Vtracking.frameTimes = align30kIdx/ 30000;% divide by natural SR to make times
 
-save([basename '_Vtracking.mat'], 'Vtracking')
+all30kIDX = [1:length(Vtracking.xpos)]+align30kIDX;
+
+Vtracking.frameTimes = all30kIDX'/ 30000;% divide by natural SR to make times
+
+if sanity
+    sanity = input('Are you happy with your sanity?? Y or N?','s');
+    switch sanity
+        case {'y','Y'}
+        case {'n','N'}
+            error('Please adjust settings then.')
+        otherwise
+            error('Unable to determine sanity, Y or N please.')
+    end
+end
+
+%% saveMat
+if saveMat
+    save([basename '_Vtracking.mat'], 'Vtracking')
+end
 
 
 
