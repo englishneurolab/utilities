@@ -7,13 +7,17 @@ function Vtracking = AlignVidDLC(basepath,varargin)
 %
 % Dependencies
 %    - Rename the DLC video file to [basename '_VideoTracking.csv']
+%      - If multiple video files naming should:
+%        [basename '_VideoTracking1.csv'] [basename '_VideoTracking2.csv']
 %    - Video is assumed to be sampleing at 100Hz
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Input
-%    'basepath' - Basepath for the recording file with the DLC output
+%    basepath   - Basepath for the recording file with the DLC output
 %                 (Default = cd)
+%
+%%%Options%%%
 %    'syncChan' - Analogin channel that has the sync light pulses
 %    'fType'    - File type from your recording (Default = 'analogin')
 %               - Options -
@@ -44,6 +48,11 @@ function Vtracking = AlignVidDLC(basepath,varargin)
 %            .ypos       = Y position in pixels, this is taken from the DLC .csv
 %                          (more important for non-linear track experiments)
 %            .frameTimes = time in seconds for each frame
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Usage
+%    Vtracking = AlignVidDLC(cd,'syncChan',2,'fType','digitalin',vidNum',2)
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -192,6 +201,8 @@ FrameInt_1 = IFI(FrameInt_1,2); % creates inter frame interval (IFI)
 
 errWin = (errWin - 1)/2;
 
+% using the first IFI size find all IPIs that are +/- errWin in size and
+% collec those indices
 alignIPIs = find(ismember(pul(:,3),[FrameInt_1(1)-errWin : FrameInt_1(1)+errWin]),inf);
 
 % pull out the IPI sizes into a new variable with the following 3 IPI sizes
@@ -261,17 +272,17 @@ if sanity
     sanity = input('Are you happy with your sanity?? Y or N?','s');
     switch sanity
         case {'y','Y'}
+            if saveMat
+                save([basename '_Vtracking.mat'], 'Vtracking')
+            end
         case {'n','N'}
-            error('Please adjust settings then.')
+            disp('Please adjust settings then.')
         otherwise
             error('Unable to determine sanity, Y or N please.')
     end
 end
 
-%% saveMat
-if saveMat
-    save([basename '_Vtracking.mat'], 'Vtracking')
-end
+
 
 
 

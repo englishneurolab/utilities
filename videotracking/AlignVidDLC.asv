@@ -7,13 +7,17 @@ function Vtracking = AlignVidDLC(basepath,varargin)
 %
 % Dependencies
 %    - Rename the DLC video file to [basename '_VideoTracking.csv']
+%      - If multiple video files naming should:
+%        [basename '_VideoTracking1.csv'] [basename '_VideoTracking2.csv']
 %    - Video is assumed to be sampleing at 100Hz
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Input
-%    'basepath' - Basepath for the recording file with the DLC output
+%    basepath   - Basepath for the recording file with the DLC output
 %                 (Default = cd)
+%
+%%%Options%%%
 %    'syncChan' - Analogin channel that has the sync light pulses
 %    'fType'    - File type from your recording (Default = 'analogin')
 %               - Options -
@@ -47,11 +51,17 @@ function Vtracking = AlignVidDLC(basepath,varargin)
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
+% Usage
+%    Vtracking = AlignVidDLC(cd,'syncChan',2,'fType','digitalin',vidNum',2)
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
 % Todos
 %    - Make a smoothing function or optimize DLC to not make large jumps in
 %      position
 %    - clean up some variable names
 %    - remove the making of un-needed information
+%    - make sanity check graphs more informative
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % History
@@ -73,7 +83,7 @@ addParameter(p,'numIPIs',3,@isnumeric);
 addParameter(p,'errWin',5,@isnumeric);
 addParameter(p,'saveMat',false,@islogical);
 addParameter(p,'vidNum',[],@isnumeric);
-addParameter(p,'sanity',true,@islogical;
+addParameter(p,'sanity',true,@islogical);
 
 parse(p,varargin{:});
 syncChan   = p.Results.syncChan;
@@ -191,6 +201,8 @@ FrameInt_1 = IFI(FrameInt_1,2); % creates inter frame interval (IFI)
 
 errWin = (errWin - 1)/2;
 
+% using the first IFI size find all IPIs that are +/- errWin in size and
+% collec those indices
 alignIPIs = find(ismember(pul(:,3),[FrameInt_1(1)-errWin : FrameInt_1(1)+errWin]),inf);
 
 % pull out the IPI sizes into a new variable with the following 3 IPI sizes
@@ -222,7 +234,7 @@ alignDwnSmpIdx = pul(alignIPIs(find(ismember(sum(x,1),numIPIs + 1))),1) + IFI(fi
 % detected frame with the sync light on to fully align
 
 if sanity
-    alignIFIStrStp = alignDwnSmpIdx - IFI(1,1) + [IFI(find(ismember(IFI(:,2), FrameInt_1))) IFI(find(ismember(IFI(:,2), FrameInt_1))+1)]
+    alignIFIStrStp = alignDwnSmpIdx - IFI(1,1) + [IFI(find(ismember(IFI(:,2), FrameInt_1))) IFI(find(ismember(IFI(:,2), FrameInt_1))+1)];
     
     figure
     plot(SyncChan_1)
@@ -256,16 +268,21 @@ all30kIDX = [1:length(Vtracking.xpos)]+align30kIDX;
 
 Vtracking.frameTimes = all30kIDX'/ 30000;% divide by natural SR to make times
 
-sanity = input('Are you happy with your sanity??','s');
-switch sanity
-            case {'y','Y'}
-                delete(fphm)
-            case {'n','N'}
-
-%% saveMat
-if saveMat
-    save([basename '_Vtracking.mat'], 'Vtracking')
+if sanity
+    sanity = input('Are you happy with your sanity?? Y or N?','s');
+    switch sanity
+        case {'y','Y'}
+            if saveMat
+                save([basename '_Vtracking.mat'], 'Vtracking')
+            end
+        case {'n','N'}
+            disp('Please adjust settings then.')
+        otherwise
+            error('Unable to determine sanity, Y or N please.')
+    end
 end
+
+
 
 
 

@@ -417,4 +417,3 @@ if saveMat
     save([basename '.ph_mod.mat'], 'ph_mod')
     
 end
-
