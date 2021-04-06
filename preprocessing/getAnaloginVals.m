@@ -14,6 +14,7 @@ function [analogin] = getAnaloginVals(basepath,varargin)
 %   'wheelChan'         - 0-based chan or 'none' (default: 0)
 %   'pulseChan'         - 0-based chan or 'none' (default: 3)
 %   'rewardChan'        - 0-based chan or 'none' (default: 1)
+%   'blinkChan '        - 0-based chan or 'none' (default: 6)
 %   'samplingRate'      - sampling rate of analogin.dat (default: [30000])
 %   'downsampleFactor'  - Downsample original data this many times (default: [0])
 %
@@ -22,6 +23,7 @@ function [analogin] = getAnaloginVals(basepath,varargin)
 %   .pos            -   wheel channel voltage
 %   .pulse          -   pulse channel voltage
 %   .reward         -   reward channel voltage
+%   .blink          -   blink channel voltage
 %   .ts             -   times in seconds
 %   .sr             -   sampling rate of analogin data
 %
@@ -54,6 +56,7 @@ addParameter(p,'saveMat',true,@islogical);
 addParameter(p,'wheelChan',0,channelsValidation);
 addParameter(p,'pulseChan',3,channelsValidation);
 addParameter(p,'rewardChan',1,channelsValidation);
+addParameter(p,'blinkChan',6,channelsValidation);
 addParameter(p,'samplingRate',30000,@isnumeric);
 addParameter(p,'downsampleFactor',0,@isnumeric);
 
@@ -63,6 +66,7 @@ saveMat         = p.Results.saveMat;
 wheelChan       = p.Results.wheelChan;
 pulseChan       = p.Results.pulseChan;
 rewardChan      = p.Results.rewardChan;
+blinkChan       = p.Results.blinkChan;
 samplingRate    = p.Results.samplingRate;
 downsampleFactor = p.Results.downsampleFactor;
 
@@ -114,6 +118,16 @@ if isnumeric(rewardChan)
         reward  = downsample(reward,downsampleFactor);
     end
     analogin.reward  = reward;
+end
+
+%blink light
+if isnumeric(blinkChan)
+    blinkchan =blinkChan +1;
+    blink  = v(blinkchan,:);
+    if downsampleFactor ~=0
+        blink  = downsample(blink,downsampleFactor);
+    end
+    analogin.blink  = blink;
 end
 
 
