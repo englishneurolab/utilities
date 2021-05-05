@@ -1,4 +1,4 @@
-function [analogin] = getAnaloginVals(basepath,varargin)
+function [analogin] = getAnaloginValsLoadBinary(basepath,varargin)
 %
 %   This function is designed to get the analogin files and store them in a
 %   seperate .mat file
@@ -36,9 +36,10 @@ function [analogin] = getAnaloginVals(basepath,varargin)
 %   'none'. Also the analogin channels are now 0-based inputs. 
 %   2021/2 Kaiser changed reading the rhd channels for loading an
 %   analogin.xml file
-%
+%   2021/4 use LoadBinary to circumvent out of memory errors
 %   TO DO
 %   - Store analogin Channels 0-based index with labels 
+%   - -> incorporate %   chunks in getAnaloginVals?
 
 %% Parse!
 
@@ -81,23 +82,20 @@ num_channels    = xml.nChannels; % ADC input info from header file
 fileinfo        = dir([basename '_analogin.dat']);
 num_samples_perChan     = fileinfo.bytes/(num_channels * 2); % uint16 = 2 bytes
 % 
-% v = bz_LoadBinary([basename '_analogin.dat'],'frequency',samplingRate,'nChannels',num_channels, 'downsample',downsampleFactor);
+v = bz_LoadBinary([basename '_analogin.dat'],'frequency',samplingRate,'nChannels',num_channels, 'downsample',downsampleFactor);
+v   = v * 0.000050354; % convert to volts, intan conversion factor
+
 % 
-fid = fopen([basename '_analogin.dat'], 'r');
-v   = fread(fid, [num_channels, num_samples_perChan], 'uint16');
-fclose(fid);
- v   = v * 0.000050354; % convert to volts, intan conversion factor
-% 
-% v = v';
+ v = v';
 
 %pulse
 if isnumeric(pulseChan)
     pulsechan = pulseChan +1;
     pulse   = v(pulsechan,:);
     
-    if downsampleFactor ~=0
-        pulse   = downsample(pulse,downsampleFactor);
-    end
+%     if downsampleFactor ~=0
+%         pulse   = downsample(pulse,downsampleFactor);
+%     end
     analogin.pulse   = pulse;
 end
 
@@ -105,10 +103,10 @@ end
 if isnumeric(wheelChan)
     wheelchan = wheelChan +1;
     pos     = v(wheelchan,:);
-    
-    if downsampleFactor ~=0
-        pos     = downsample(pos,downsampleFactor);
-    end
+%     
+%     if downsampleFactor ~=0
+%         pos     = downsample(pos,downsampleFactor);
+%     end
     analogin.pos     = pos;
 
 end
@@ -117,9 +115,9 @@ end
 if isnumeric(rewardChan)
     rewardchan =rewardChan +1;
     reward  = v(rewardchan,:);
-    if downsampleFactor ~=0
-        reward  = downsample(reward,downsampleFactor);
-    end
+%     if downsampleFactor ~=0
+%         reward  = downsample(reward,downsampleFactor);
+%     end
     analogin.reward  = reward;
 end
 
@@ -127,9 +125,9 @@ end
 if isnumeric(blinkChan)
     blinkchan =blinkChan +1;
     blink  = v(blinkchan,:);
-    if downsampleFactor ~=0
-        blink  = downsample(blink,downsampleFactor);
-    end
+%     if downsampleFactor ~=0
+%         blink  = downsample(blink,downsampleFactor);
+%     end
     analogin.blink  = blink;
 end
 

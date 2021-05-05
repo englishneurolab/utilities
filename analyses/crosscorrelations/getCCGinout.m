@@ -1,4 +1,4 @@
-function [ccginout] = getCCGinout(basepath, epochs, varargin)
+function [ccginout] = getCCGinout(basepath, spikes, epochs, varargin)
 
 %
 %       USAGE
@@ -69,7 +69,7 @@ cd(basepath)
 %%
 
 % Load in the spikes
-spikes = bz_LoadPhy;
+%spikes = bz_LoadPhy;- reagan commented out 5.3.21
 
 if ~isempty(epochs)
     % Get spikes in or out epoch

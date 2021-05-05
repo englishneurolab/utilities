@@ -50,6 +50,7 @@ addParameter(p,'saveAs','.pow.analysis.mat',@islogical);
 addParameter(p,'channels','all',channelsValidation);
 addParameter(p,'doIRASA',true,@islogical);
 addParameter(p,'doFMA',true,@islogical);
+addParameter(p,'doPlot',true,@islogical);
 addParameter(p,'freqRange',[1 150],@isnumeric);
 
 parse(p,varargin{:});
@@ -59,19 +60,22 @@ saveAs          = p.Results.saveAs;
 channels        = p.Results.channels;
 doIRASA         = p.Results.doIRASA;
 doFMA           = p.Results.doFMA;
+doPlot          = p.Results.doPlot;
 freqRange       = p.Results.freqRange;
 
 %% Calculate Powerspectra
 
 if doFMA
     % FMA
-    lfp_fma = [lfp.data, lfp.timestamps];
+    
+    % needs epochs? idk
+    lfp_fma = [double(lfp.data), lfp.timestamps]; % 1 row data, 1 row timestamps Nx2
     [spectrum,f,s] = MTSpectrum(lfp_fma,'frequency',lfp.samplingRate,'show','off','range',freqRange);
     
     pow.fma.spectrum    = spectrum;
     pow.fma.f           = f;
     pow.fma.s           = s;
-    pow.fma.method      = method;
+%     pow.fma.method      = method;
     
     if doPlot
         figure,
