@@ -30,7 +30,7 @@ function STP = ShortTermPlasticity_axax(basepath,varargin)
 %
 %   HISTORY
 %   Code originially written by Sam Mckenzie
-%   2020/10 Code addapted/ edited by Kaiser Arndt (7/12/20)
+%   2020/10 Code addapted/ edited by Kaiser Arndt (2020/07/12)
 %   2021/02 Lianne documented and edited this code further
 %
 %   TO-DO

@@ -18,6 +18,7 @@ function [csd, lfpAvg] = getAnatSPWCSD
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 %   Todo:
+%   - Combine with getAnatRIPCSD to make a getAnatEvtCSD function
 %
 %
 %   Kaiser Arndt 21/2

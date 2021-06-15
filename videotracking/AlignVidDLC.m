@@ -62,10 +62,12 @@ function Vtracking = AlignVidDLC(basepath,varargin)
 %    - clean up some variable names
 %    - remove the making of un-needed information
 %    - make sanity check graphs more informative
+%    - base0/1
+%    - min/max normalize syncChan
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % History
-% - (21/2/24) Code written by Kaiser Arndt
+% - (2021/02/24) Code written by Kaiser Arndt
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
