@@ -6,6 +6,7 @@ function plotPhaseMap(varargin)
 %
 % DEPENDENCIES
 %    - buzcode
+%    - cellexplorer
 %    - utilities from English lab github
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -42,37 +43,49 @@ spacing = p.Results.spacing;
 basepath = cd; 
 basename = bz_BasenameFromBasepath(basepath);
 load([basename '.ph_mod.mat'])
+load([basename '.cell_metrics.cellinfo.mat'])
+
+%% Organizing how to plot
+cells = unique(cell_metrics.putativeCellType)
+
+for i = 1:length(unique(cell_metrics.putativeCellType))
+    types{i} = cellfun(@eq, cell_metrics.putativeCellType, cells)
+end
 
 %% Plotting
 
-figure
 
-plotCount = 0;
-
-SPDim = round(sqrt(size(ph_mod.ph_rate,3)));
-
-for i = 1:size(ph_mod.ph_rate,3);
-     
-    plotCount = plotCount + 1 % set subplot location
+for ii = 1:length(unique(cell_metrics.putativeCellType))
+    figure
     
-    k = gaussian2Dfilter([10 10],[.5 .5]); % set gaussian kernel to convolve with
+    plotCount = 0;
     
-    pmVals = nanconvn((ph_mod.ph_rate(:,1:end-1,i)),k);
-    %= values to plot, nfreq-1 because the values fall within those lines
-    subplot(SPDim,SPDim, plotCount);
-    imagesc(ph_mod.ph_bin,[],nanconvn((ph_mod.ph_rate(:,1:end-1,i)),k)...
-        ,[min(linearize(ph_mod.ph_rate(:,1:end-1,i)))...
-        max(linearize(ph_mod.ph_rate(:,1:end-1,i)))])
+    SPDim = round(sqrt(size(ph_mod.ph_rate,3)));
     
-    % labeling
-    hold on
-    colormap('jet')
-    plot(ph_mod.ph_bin,10+cos(ph_mod.ph_bin)*10,'w')
-    set(gca,'ytick',0:10:length(ph_mod.freq),'yticklabel',round(ph_mod.freq(1:10:end)))
-    set(gca,'ydir','normal')
-    ylabel(['Frequency ' '(' spacing ' spacing)'])
-    xlabel('Oscillation Phase')
-    colorbar
+    for i = 1:size(ph_mod.ph_rate,3);
+        
+        plotCount = plotCount + 1 % set subplot location
+        
+        k = gaussian2Dfilter([10 10],[.5 .5]); % set gaussian kernel to convolve with
+        
+        pmVals = nanconvn((ph_mod.ph_rate(:,1:end-1,i)),k);
+        %= values to plot, nfreq-1 because the values fall within those lines
+        subplot(SPDim,SPDim, plotCount);
+        imagesc(ph_mod.ph_bin,[],nanconvn((ph_mod.ph_rate(:,1:end-1,i)),k)...
+            ,[min(linearize(ph_mod.ph_rate(:,1:end-1,i)))...
+            max(linearize(ph_mod.ph_rate(:,1:end-1,i)))])
+        
+        % labeling
+        hold on
+        colormap('jet')
+        plot(ph_mod.ph_bin,10+cos(ph_mod.ph_bin)*10,'w')
+        set(gca,'ytick',0:10:length(ph_mod.freq),'yticklabel',round(ph_mod.freq(1:10:end)))
+        set(gca,'ydir','normal')
+        title([cell_metrics.putativeCellType{i}])
+        ylabel(['Frequency ' '(' spacing ' spacing)'])
+        xlabel('Oscillation Phase')
+        colorbar
+    end
     
     
 end

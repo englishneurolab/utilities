@@ -28,6 +28,7 @@ Chans.Analog.pulse  = nan
 Chans.ripchan       = 38;
 Chans.SWchan        = 61;
 
+
 save([basename '.Chans.mat'], 'Chans')
 
 
@@ -115,7 +116,7 @@ inputData.rawEeg = mat2cell(double(lfp.data),length(lfp.data),x)
 inputData.eegFS = 1
 inputData.Chs = lfp.channels
 inputData.MotionType = 'File'
-inputData.motion = double(bz_LoadBinary([basename '_analogin.dat'],'nChannels', 8, 'channels', Chans.Analog.pos + 1, 'precision', 'uint16', 'downsample', 30000)) * 0.000050354; %state editor motion needs data in a one hz format
+inputData.motion = double(bz_LoadBinary([basename '.analogin.dat'],'nChannels', 8, 'channels', Chans.Analog.pos + 1, 'precision', 'uint16', 'downsample', 30000)) * 0.000050354; %state editor motion needs data in a one hz format
 % inputData.motion(end) = []; % this may be needed if you run into an error
 % on line 983
 clear lfp
@@ -129,7 +130,7 @@ TheStateEditor(basename, inputData) % this is the manual state editor, use to ch
 delete([basename '.SleepStateEpisodes.states.mat'])
 
 inputData.motion(end) = []; % delete basename.eegstates.mat before rerunning the editor
-save([basename '_inputData.mat'], 'inputData')
+save([basename '.inputData.mat'], 'inputData')
 
 
 

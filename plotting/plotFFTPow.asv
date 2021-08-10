@@ -47,7 +47,7 @@ colors = ['b';'g';'r';'c';'m';'y';'k'];
 %% Plot total anatomical spectrigram
 
 figure
-imagesc(lfpPow.pow(1:find(lfpPow.freqs == 500),:)')
+imagesc(lfpPow.pow'(1:find(lfpPow.freqs == 500)))
 
 %% plot
 
