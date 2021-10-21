@@ -65,7 +65,7 @@ cd(basepath)
 load('chanMap.mat')
 
 figure
- text(xcoords,ycoords,num2str(chanMap0ind))
+ text(xcoords,ycoords,num2str(chanMap0ind'))
  xlim([min(xcoords)-10, max(xcoords)+10])
  ylim([min(ycoords)-10 ,max(ycoords)+10])
 

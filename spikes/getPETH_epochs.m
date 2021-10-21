@@ -42,6 +42,7 @@ function [peth] = getPETH_epochs(basepath, varargin)
 %
 % TO-DO
 %
+%    add plotting option
 %
 % HISTORY 
 % 2020/12/4     Lianne documented and proofed this function

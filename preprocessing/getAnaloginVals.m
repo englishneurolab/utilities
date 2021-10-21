@@ -11,9 +11,9 @@ function [analogin] = getAnaloginVals(basepath,varargin)
 %
 %   INPUTS
 %   'basename'          - if basename is any different then parentfolder name
-%   'wheelChan'         - 0-based chan or 'none' (default: 0)
-%   'pulseChan'         - 0-based chan or 'none' (default: 3)
-%   'rewardChan'        - 0-based chan or 'none' (default: 1)
+%   'wheelChan'         - 1-based chan or 'none' (default: 1)
+%   'pulseChan'         - 1-based chan or 'none' (default: 4)
+%   'rewardChan'        - 1-based chan or 'none' (default: 2)
 %   'samplingRate'      - sampling rate of analogin.dat (default: [30000])
 %   'downsampleFactor'  - Downsample original data this many times (default: [0])
 %
@@ -34,6 +34,7 @@ function [analogin] = getAnaloginVals(basepath,varargin)
 %   'none'. Also the analogin channels are now 0-based inputs. 
 %   2021/2 Kaiser changed reading the rhd channels for loading an
 %   analogin.xml file
+%   2021/10 Kaiser changed loading in analogin to bz_LoadBinary from fwrite
 %
 %   TO DO
 %   - Store analogin Channels 0-based index with labels 
@@ -70,34 +71,25 @@ downsampleFactor = p.Results.downsampleFactor;
 cd(basepath)
 
 %%
-
-xml = LoadXml([basename '_analogin.xml']);
-
-num_channels    = xml.nChannels; % ADC input info from header file
-fileinfo        = dir([basename '_analogin.dat']);
-num_samples_perChan     = fileinfo.bytes/(num_channels * 2); % uint16 = 2 bytes
-
-fid = fopen([basename '_analogin.dat'], 'r');
-v   = fread(fid, [num_channels, num_samples_perChan], 'uint16');
-fclose(fid);
-v   = v * 0.000050354; % convert to volts, intan conversion factor
-
-
-%pulse
-if isnumeric(pulseChan)
-    pulsechan = pulseChan +1;
-    pulse   = v(pulsechan,:);
-    
-    if downsampleFactor ~=0
-        pulse   = downsample(pulse,downsampleFactor);
-    end
-    analogin.pulse   = pulse;
+chans = [];
+if isnumeric(wheelChan)
+    chans = [chans wheelChan];
 end
+if isnumeric(pulseChan)
+    chans = [chans pulseChan];
+end
+if isnumeric(rewardChan)
+    chans = [chans rewardChan];
+end
+
+analog = bz_LoadBinary([basename '_analogin.dat'], 'frequency', samplingRate, ...
+    'nChannels', 8, 'channels', chans);
+v   = analog * 0.000050354; % convert to volts, intan conversion factor
+
 
 %wheel
 if isnumeric(wheelChan)
-    wheelchan = wheelChan +1;
-    pos     = v(wheelchan,:);
+    pos     = v(:,1);
     
     if downsampleFactor ~=0
         pos     = downsample(pos,downsampleFactor);
@@ -106,10 +98,19 @@ if isnumeric(wheelChan)
 
 end
 
+%pulse
+if isnumeric(pulseChan)
+    pulse   = v(:,2);
+    
+    if downsampleFactor ~=0
+        pulse   = downsample(pulse,downsampleFactor);
+    end
+    analogin.pulse   = pulse;
+end
+
 %reward
 if isnumeric(rewardChan)
-    rewardchan =rewardChan +1;
-    reward  = v(rewardchan,:);
+    reward  = v(:,3);
     if downsampleFactor ~=0
         reward  = downsample(reward,downsampleFactor);
     end
@@ -123,12 +124,12 @@ if downsampleFactor ~=0
     sr = samplingRate/downsampleFactor;
 end
 
-analogin.ts      = (1:length(v(1,:)))/sr;
+analogin.ts      = (1:length(v(:,1)))/sr;
 analogin.sr      = sr;
 
 
 if saveMat
-    save([basename '_analogin.mat'],'analogin')
+    save([basename '_analogin.mat'],'analogin','-V7.3')
 end
 
 end

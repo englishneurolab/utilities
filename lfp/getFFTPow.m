@@ -43,6 +43,8 @@ basename = bz_BasenameFromBasepath(basepath);
 
 lfp = bz_GetLFP('all') ;
 
+load([basename '.session.mat'])
+
 
 %% assign
 
@@ -82,7 +84,7 @@ end
 clear whiten
 clear filtered
 %%
-
+disp('Computing FFT')
 Fs = lfpwhiten.samplingRate;
 L = length(lfpwhiten.timestamps);
 
@@ -102,19 +104,21 @@ end
 
 
 
-lfpPow.freqs = Fs*(0:(L/2))/L;
+lfpPow.freqs = Fs*(1:(L/2))/L% round((Fs*(1:(L/2))/L) + 1);
 lfpPow.channels = channels;
 
+% 
+% res = zeros(length(lfpPow.freqs),1);
+% res(1:round((L/2)/(Fs/2)):end) = 1;
+% res = logical(res);
 
-res = zeros(length(lfpPow.freqs),1);
-res(1:round((L/2)/(Fs/2)):end) = 1;
-res = logical(res);
-
-lfpPow.freqs = lfpPow.freqs(res);
-lfpPow.pow = lfpPow.pow(res,:);
+% lfpPow.freqs = lfpPow.freqs(res);
+% lfpPow.pow = lfpPow.pow(res,:);
 
 
 %% stats
+
+disp('Saving all my hard work')
 
 % group power response for each channel into different freq bands
 [status,interval,index] = InIntervals(lfpPow.freqs,F);
@@ -132,5 +136,6 @@ lfpPow.stdPow    = stdPow;
 lfpPow.freqBands = F;
 
 
-save([basename '.lfpPow.mat'], 'lfpPow')
+save([basename '.lfpPow.mat'], 'lfpPow','-v7.3') %save tp file size with greater capacity
+
 
