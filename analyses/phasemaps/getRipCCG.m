@@ -26,6 +26,7 @@ function [ripple_ccg] = getRipCCG(basepath,spikes,varargin)
 %
 %   TO-DO
 %   If no gd_eps --> gd_eps is entire session?
+%   This needs to not be dependent on STP
 
 
 %% Parse !

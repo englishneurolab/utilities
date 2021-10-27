@@ -3,7 +3,7 @@ function [ph_mod] = getPhaseMap(basepath, varargin)
 % frequencies wanting to be analyzed
 %
 %   USAGE 
-%   [ph_mod] = getPhaseMap_Kaiser_edit(basepath, <options>)
+%   [ph_mod] = getPhaseMap(basepath, <options>)
 %
 %   Dependencies: Buzcode, Englishlab\utilities, output
 %   ShortTermPlasticity_axax
