@@ -4,8 +4,9 @@ function zeta = runZeta(basepath,event, varargin)
 %   USAGE
 %
 %   %% Dependencies %%%
+% 	buzcode
 %   ZETA Toolbox (in utilities\external)
-%
+%   https://github.com/JorritMontijn/ZETA
 %
 %   INPUTS
 %   basepath    - path in which spikes and optostim structs are located
@@ -20,13 +21,17 @@ function zeta = runZeta(basepath,event, varargin)
 %   'units' - 
 %
 %   OUTPUTS
-%  
+%   zeta
+%       .P              = p value output of getZeta;
+%       .vecLatencies   = vecLatencies output of getZeta;
+%       .sZeta          = sZETA output of getZeta;
+%       .sRate          = sampleRate;
+%       .UID            - unit ID from spikes
 %
 %
 %   EXAMPLE
 %
-%   [zeta] = runZeta(basepath,optoStim.timestamps(:,1));
-
+%   [zeta] = runZeta(basepath,optoStim.timestamps(:,1),'saveMat',true);
 %   
 %   HISTORY
 %   2021/02 Lianne updated this
@@ -48,10 +53,10 @@ unitsValidation = @(x) isnumeric(x) || strcmp(x,'all');
 
 p = inputParser;
 addParameter(p,'basename',basename,@isstring);
-addParameter(p,'saveMat',true,@islogical);
+addParameter(p,'saveMat',false,@islogical);
 addParameter(p,'saveAs','.pethzeta.stats.mat',@isstring);
-addParameter(p,'timeBefore',0.1,@isnumeric);
-addParameter(p,'timeAfter',0.02,@isnumeric); % 
+addParameter(p,'timeBefore',0.1,@isnumeric);  % 100 ms baseline
+addParameter(p,'timeAfter',0.02,@isnumeric); % 20ms post event-on
 addParameter(p,'units','all',@unitsValidation); % 
 
 
@@ -78,7 +83,12 @@ else
 end
 
 for iUnit = selUnits
-    [dblZetaP(iUnit),vecLatencies(iUnit,:), sZETA{iUnit},sRate{iUnit}] = getZeta(spikes.times{iUnit},event-timeBefore,totalDurWin,[],4);
+    %interval check
+    [status,~] = InIntervals(spikes.times{iUnit},[event-timeBefore event-timeBefore+totalDurWin]);
+    if sum(status~=0)
+        [dblZetaP(iUnit),vecLatencies(iUnit,:), sZETA{iUnit},sRate{iUnit}] = getZeta(spikes.times{iUnit},event-timeBefore,totalDurWin,[],0);
+    end
+    
 end
 
 zeta.P              = dblZetaP;

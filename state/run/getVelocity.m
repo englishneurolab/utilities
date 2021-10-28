@@ -152,7 +152,7 @@ if doFigure
 end
 
 vel.vel_cm_s = vel_cm_s;
-vel.time = time;
+vel.time = time(2:end);
 vel.dt = dt;
 
 

@@ -124,7 +124,7 @@ dim = size(sig,2);
 Ndata = 2^floor(log2(Ntotal*0.9));
 
 % Nsubset is fixed to 15
-Nsubset = 15;
+Nsubset = 10; %was 15
 
 % compute the auto-power spectrum of the originally sampled time series
 L = floor((Ntotal-Ndata)/(Nsubset-1));
@@ -135,6 +135,7 @@ nfft = 2^nextpow2(ceil(hset(end))*Ndata);
 % set output data length Nfrac
 Nfrac = nfft/2 + 1;
 freq = srate/2*linspace(0,1,Nfrac); freq = freq(:);
+% disp(length(freq))
 
 % compute the spectrum of mixed data
 Smixd = zeros(Nfrac,dim);

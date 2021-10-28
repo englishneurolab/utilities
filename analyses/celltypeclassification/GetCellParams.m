@@ -1,10 +1,10 @@
 function GetCellParams(basepath)
-% This function is designed to 
+% This function is designed to
 %
 %   USAGE
 %
 %   %% Dependencies %%%
-%   
+%
 %   INPUTS
 %   basepath    - path in which spikes and optostim structs are located
 %
@@ -15,9 +15,9 @@ function GetCellParams(basepath)
 %   'saveAs'    - if you want another suffix for your save
 %
 %   OUTPUTS
-%   
+%
 %   EXAMPLE
-%   
+%
 %   HISTORY
 %
 %   TO-DO
@@ -71,21 +71,21 @@ loner = rip_st(diff([0;rip_st])>.5); % select long ripples? what are we doing he
 rip_peth = [];
 
 for i = 1:length(spikes.times)
-rip_peth(i,:) = CrossCorr(loner,spikes.times{i},.01,100);
+    rip_peth(i,:) = CrossCorr(loner,spikes.times{i},.01,100);
 end
 
-else
-    rip_peth = nan(length(spikes.times),101);
-end
+% else
+%     rip_peth = nan(length(spikes.times),101);
+% end
 
-%% Get ACG fit parameters 
+%% Get ACG fit parameters
 
-ACG_mat =[];paut=[]; 
+ACG_mat =[];paut=[];
 idx = 1;
 for j = 1:length(spikes.times)
     ACG_mat(idx,:) = 1000*(CrossCorr(spikes.times{j},spikes.times{j},.001,100)/length(spikes.times{j}));
     ACG_mat(idx,51) = 0;
-        
+    
     [fmodel,ydata,xdata,paut(idx,:)] = fitpyrint(ACG_mat(idx,:),0:50,0,20);
     idx = idx+1;
     
@@ -93,7 +93,7 @@ end
 
 %% Calculate mean firing rate
 
-Rate = []; 
+Rate = [];
 for i=1:length(spikes.times)
     ISI2 = diff([spikes.times{i}; nan]);
     ISI1 = diff([nan;spikes.times{i}]);
@@ -109,21 +109,21 @@ cluster = getClusterQuality(basepath);  % maybe through cellexplorer?
 
 
 for uniti = 1:length(spikes.UID)
-    CellParams(uniti).ShankID = spikes.shankID(uniti); 
-    CellParams(uniti).CluID = spikes.cluID(uniti); 
-    CellParams(uniti).Session = spikes.sessionName; 
-   % CellParams(uniti).SpikeTimes = spikes.times{uniti}; 
+    CellParams(uniti).ShankID = spikes.shankID(uniti);
+    CellParams(uniti).CluID = spikes.cluID(uniti);
+    CellParams(uniti).Session = spikes.sessionName;
+    % CellParams(uniti).SpikeTimes = spikes.times{uniti};
     CellParams(uniti).ACG = mono_res.prob_noncor(:,uniti,uniti);
     
-  
+    
     CellParams(uniti).WaveForm =spikes.rawWaveform{uniti};
-   
-    CellParams(uniti).LocMaxWaveForm = spikes.maxWaveformCh; 
-    CellParams(uniti).Rate = Rate(uniti); 
-    CellParams(uniti).RipPETH = rip_peth(uniti,:); 
-    CellParams(uniti).paut = paut(uniti,:); 
-    CellParams(uniti).badISI = cluster.badISI(uniti); 
-    CellParams(uniti).LRation = cluster.LRatio(uniti); 
+    
+    CellParams(uniti).LocMaxWaveForm = spikes.maxWaveformCh;
+    CellParams(uniti).Rate = Rate(uniti);
+    CellParams(uniti).RipPETH = rip_peth(uniti,:);
+    CellParams(uniti).paut = paut(uniti,:);
+    CellParams(uniti).badISI = cluster.badISI(uniti);
+    CellParams(uniti).LRation = cluster.LRatio(uniti);
     CellParams(uniti).IsoDist = cluster.IsolDist(uniti);
 end
 
@@ -131,29 +131,29 @@ end
 %% Detect monosynaptic connectivity
 
 if ~isempty(mono_res.sig_con)
-pre = unique(mono_res.sig_con(:,1));
-
-for i = pre'
-    CellParams(i).post = mono_res.sig_con(mono_res.sig_con(:,1)==i,2) ;
-end
-
-
-post = unique(mono_res.sig_con(:,2));
-
-for i = post'
-    CellParams(i).pre = mono_res.sig_con(mono_res.sig_con(:,2)==i,1) ;
-end
-
-end
+    pre = unique(mono_res.sig_con(:,1));
     
+    for i = pre'
+        CellParams(i).post = mono_res.sig_con(mono_res.sig_con(:,1)==i,2) ;
+    end
+    
+    
+    post = unique(mono_res.sig_con(:,2));
+    
+    for i = post'
+        CellParams(i).pre = mono_res.sig_con(mono_res.sig_con(:,2)==i,1) ;
+    end
+    
+end
+
 
 %% save
 if saveMat
     save([basepath filesep basename saveAs],'CellParams','mono_res');
-
-
-
-
-
-
-
+    
+    
+    
+    
+    
+    
+    

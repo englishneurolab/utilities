@@ -217,7 +217,7 @@ for i = 1:length(mono_res) % uncommented, lianne
     %%
     %save all variable to output file
     if saveMat
-            save([basename  'saveAs'], 'STP')
+            save([basename  saveAs], 'STP')
     end
     
 end

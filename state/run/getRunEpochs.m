@@ -70,8 +70,8 @@ diff_Rb = diff(logicRb); %this is not correct alaways goes from -1 directly to 1
 % what if recording starts running: startIdx = first timestamp
 
 %% finding start and stop of running epochs
-runStartIdx = find(diff_Rb==1)+1;
-runStopIdx = find(diff_Rb==-1)+1;
+runStartIdx = find(diff_Rb == 1)+1;
+runStopIdx = find(diff_Rb == -1)+1;
 
 StartorStop = diff_Rb(diff_Rb~=0);
 if ~isempty(runStartIdx)

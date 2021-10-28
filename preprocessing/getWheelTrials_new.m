@@ -1,4 +1,4 @@
-function [len_ep, ts_ep, vel_ep, tr_ep, len_ep_fast, ts_ep_fast, vel_ep_fast] =getWheelTrials(analogin)
+function [lap] =getWheelTrials_new(analogin)
 % % [len_ep, ts_ep, vel_ep, tr_ep, len_ep_fast, ts_ep_fast, vel_ep_fast] =getWheelTrials(analogin)
 % Lianne 20191126, adapted from all the permutations of getDiskTrials
 

@@ -54,7 +54,7 @@ basename = bz_BasenameFromBasepath(basepath);
 p = inputParser;
 % set defaults
 addParameter(p,'basename',basename,@isstr);
-addParameter(p,'saveMat',true,@islogical);
+addParameter(p,'saveMat',false,@islogical);
 addParameter(p,'epochs',[],@isnumeric);
 addParameter(p,'epochName',[], @isstr);
 addParameter(p,'proximityBurstSpikes', 0.006, @isnumeric);
@@ -69,6 +69,7 @@ epochs          = p.Results.epochs;
 saveAs          = p.Results.saveAs;
 epochName       = p.Results.epochName;
 proximBurstSpks = p.Results.proximityBurstSpikes;
+optoExcl        = p.Results.optoExcl;
 
 cd(basepath)
 %%
@@ -102,11 +103,20 @@ end
 % Excluding other epochs
 
 % NB this also works if 'epochs' is empty --> burstIndex.out will be empty
-[status_epoch ,~ , ~ ] = cellfun(@(a) InIntervals(a,epochs), spikesTimes,'UniformOutput', false);
 
-for iUnit = 1:length(spikes.times)
-    spkTimOutEpochs{iUnit}  = spikesTimes{iUnit}(~status_epoch{iUnit});
-    spkTimInEpochs{iUnit}   = spikesTimes{iUnit}(status_epoch{iUnit});
+if ~isempty(epochs)
+    [status_epoch ,~ , ~ ] = cellfun(@(a) InIntervals(a,epochs), spikesTimes,'UniformOutput', false);
+    
+    for iUnit = 1:length(spikes.times)
+        spkTimOutEpochs{iUnit}  = spikesTimes{iUnit}(~status_epoch{iUnit});
+        spkTimInEpochs{iUnit}   = spikesTimes{iUnit}(status_epoch{iUnit});
+    end
+else
+    for iUnit = 1:length(spikes.times)
+
+    spkTimOutEpochs{iUnit}  = spikesTimes{iUnit};
+    spkTimInEpochs{iUnit}  = [];
+    end
 end
 
 

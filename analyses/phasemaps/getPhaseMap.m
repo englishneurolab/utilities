@@ -45,7 +45,7 @@ function [ph_mod] = getPhaseMap(basepath, varargin)
 %
 %   EXAMPLES
 %
-%
+%[ph_mod] = getPhaseMap(basepath, 'epochs', run.epochs,'saveMat',true)
 %   NOTES
 %   % ph_mod.ripmodtime is now ph_mod.ripmod.time
 %   % ph_mod.ripmod is now ph_mod.ripmod.mod
@@ -351,7 +351,7 @@ end
 %% Calculate the ripple CCG and get the ripple modulation:
 
 if doRippleCCG
-    ripple_ccg  = getRipCCG(basepath,spikes,'epochs',gd_eps,'ccgbin', 0.005,'ccgtotsamples',10001,'saveMat',false);
+    ripple_ccg  = getRipCCG(basepath,spikes,'epochs',gd_eps,'saveMat',false);
     ripmod      = getRipMod(basepath,'ccg',ripple_ccg,'saveMat',false);
     
     ph_mod.ripmod           = ripmod; % with ripmod.mod and ripmod.time

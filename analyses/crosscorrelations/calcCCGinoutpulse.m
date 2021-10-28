@@ -1,4 +1,4 @@
-function [ccginout,t] = calcCCGinoutpulse(basepath, spikes, pulseEpochs, varargin)
+function [ccginout] = calcCCGinoutpulse(basepath, spikes, pulseEpochs, varargin)
 
 %
 %       USAGE
@@ -23,11 +23,17 @@ function [ccginout,t] = calcCCGinoutpulse(basepath, spikes, pulseEpochs, varargi
 %       OUTPUTS 
 %
 %
+%       EXAMPLE
+%       [ccginout] = calcCCGinoutpulse(basepath, spikes, optoStim.timestamps)
+%
 %       HISTORY
 %
 %
 %       TO-DO
-
+%       Doesnt work with CellExplorer in path, because it also has a CCG
+%       that's different from the one inb buzcode
+%
+%
 
 %% Parse! 
 
@@ -41,7 +47,8 @@ Fs = sessionInfo.rates.wideband;
 
 p = inputParser;
 addParameter(p,'basename',basename,@isstr);
-addParameter(p,'saveMat',true,@islogical);
+addParameter(p,'saveMat',false,@islogical);
+addParameter(p,'saveAs','.ccginout.analysis.mat',@islogical);
 addParameter(p,'binSize',0.001,@isnumeric);
 addParameter(p,'duration',0.2,@isnumeric);
 addParameter(p,'normalization','rate',@isstr);
@@ -50,6 +57,7 @@ addParameter(p,'normalization','rate',@isstr);
 parse(p,varargin{:});
 basename        = p.Results.basename;
 saveMat         = p.Results.saveMat;
+saveAs          = p.Results.saveAs;
 normalization   = p.Results.normalization;
 duration       = p.Results.duration;
 binSize        = p.Results.binSize;
@@ -58,7 +66,7 @@ cd(basepath)
 
 
 %%
-[status_pulse ,~ , ~ ] = cellfun(@(a) InIntervals(a,pulseEpochs), spikes.times,'UniformOutput', false);
+[status_pulse ,~ ] = cellfun(@(a) InIntervals(a,pulseEpochs), spikes.times,'uni', false);
 
 for iUnit = 1:length(spikes.times)
     spkTimIN{iUnit}   = spikes.times{iUnit}(status_pulse{iUnit});
@@ -75,6 +83,7 @@ ccginout.binSize    = binSize;
 ccginout.duration   = duration;
 ccginout.normalization = normalization; 
 
-
+if saveMat
+    save([basename saveAs],'ccginout')
 end
-    
+end

@@ -32,7 +32,7 @@ function [peth] = getPETH_epochs(basepath, varargin)
 
 %
 %  EXAMPLES
-%  [peth] = getPETH_epochsbasepath,'epochs',pulseEpochs,'timwin',[-0.4 0.4], ...
+%  [peth] = getPETH_epochs(basepath,'epochs',pulseEpochs,'timwin',[-0.4 0.4], ...
 %               'binSize', 0.01, 'saveAs', '.pethPulse.mat')
 %  [peth] = getPETH_epochs(basepath,'saveMat',false)  
 %   

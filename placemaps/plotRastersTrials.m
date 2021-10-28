@@ -15,7 +15,7 @@ for iUnit = 1:length(spikes.UID)
     end
 
 end
-save spkVoltage.mat
+save([basename '.spkVoltage.mat'],'spkEpVoltage')
 
 %% This actually plots rasters over trials by position
 

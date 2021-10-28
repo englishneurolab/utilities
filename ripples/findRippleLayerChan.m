@@ -82,7 +82,7 @@ for iChan = 1:length(lfp.channels)
         ripSnip{iChan}{ripCount} = selChanLFPbp(ripStartInd:ripStopInd);
         
         % Within snippet find max amplitude per channel
-        [pkVal,pkInd] = findpeaks(double(ripSnip{iChan}{ripCount}));
+        [pkVal,pkInd] = findpeaks(ripSnip{iChan}{ripCount});
         [pkValmaxVal(iChan,ripCount), pkValmaxIndInd] = max(pkVal);
         [pkValmaxInd(iChan,ripCount)] = pkInd(pkValmaxIndInd);
     end
@@ -105,6 +105,6 @@ peakRipChan.ripSnip = ripSnip;
 
 %% And save
 if saveMat
-    save([basename saveAs],peakRipChan)
+    save([basename saveAs],'peakRipChan')
 end
 end

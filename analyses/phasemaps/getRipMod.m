@@ -24,7 +24,8 @@ function ripmod = getRipMod(basepath, varargin)
 %   .time
 %
 %   EXAMPLES
-%
+%  ripmod = getRipMod(basepath, 'ccg',ripple_ccg)
+
 %
 %
 %   NOTES

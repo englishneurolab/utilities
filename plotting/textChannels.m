@@ -58,32 +58,44 @@ cd(basepath)
 
 % load('rez.mat')
 % chanMap = rez.ops.chanMap;
-% chanMap0ind = chanMap-1;
 % xcoords = rez.xcoords;
 % ycoords = rez.ycoords;
+% chanMap0ind = chanMap-1;
 
 load('chanMap.mat')
 
 figure
- text(xcoords,ycoords,num2str(chanMap0ind))
- xlim([min(xcoords)-10, max(xcoords)+10])
- ylim([min(ycoords)-10 ,max(ycoords)+10])
 
-hold on
-    
-   if ~isempty(markerChans)
- 
-markerColor = {'k','m','r','g','b','y'};
-for markerChan = 1:length(markerChans)
-    plot(xcoords(markerChan)-1,ycoords(markerChan),'o','MarkerFaceColor',markerColor{markerChan})
-end
-
-   end
-   
+text(xcoords,ycoords,num2str(chanMap0ind))
+xlim([min(xcoords)-10, max(xcoords)+10])
+ylim([min(ycoords)-10 ,max(ycoords)+10])
 box off
 xlabel('distance (um)')
 ylabel('distance (um)')
-% lloc = legend({'Ripple','AAC'},'Location','northoutside','Box','off','NumColumns',2);
-   end
+if ~isempty(markerChans)
+    % % text(xcoords,ycoords,num2str(chanMap0ind))
+    % % xlim([min(xcoords)-10, max(xcoords)+10])
+    % % ylim([min(ycoords)-10 ,max(ycoords)+10])
+    
+ 
+    
+    markerColor = {'k','m','r','g','b','y'};
+    for markerChan = 1:length(markerChans)
+        plot(xcoords(markerChan)-1,ycoords(markerChan),'o','MarkerFaceColor',markerColor(markerChan))
+    end
+end
+% % make 
+% aacChanMap = chanMap == spikes.maxWaveformCh(iAAC)+1;
+% ripChanMap = chanMap == rippleChan+1;
+% % hold on
+% % plot(xcoords(aacChanMap)-.5,ycoords(aacChanMap),'mo','MarkerFaceColor','m')
+% % text(xcoords,ycoords,num2str(chanMap0ind))
+% % xlim([min(xcoords)-10, max(xcoords)+10])
+% % ylim([min(ycoords)-10 ,max(ycoords)+10])
 
+% box off
+% xlabel('distance (um)')
+% ylabel('distance (um)')
+% lloc = legend({'Ripple','AAC'},'Location','northoutside','Box','off','NumColumns',2);
+end
 
