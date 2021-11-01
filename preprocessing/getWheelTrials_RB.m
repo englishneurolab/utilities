@@ -1,16 +1,21 @@
-function [len_ep, ts_ep, vel_ep, tr_ep, len_ep_fast, ts_ep_fast, vel_ep_fast] =getWheelTrials(analogin)
+function [len_ep, ts_ep, vel_ep, tr_ep, len_ep_fast, ts_ep_fast, vel_ep_fast] =getWheelTrials_RB(analogin)
 
 % Lianne 20191126, adapted from all the permutations of getDiskTrials
 
 % Lianne 20200806, from negative to positive wheel trials,
 % % % added options for all the different sessions that we currently have. wheels pos to neg,
 % % % start with pos or neg peak.
-% Reagan 20210429 - Soft coding parts of code:
+% Reagan 2021.04.29 - Soft coding parts of code:
 %                       - thresholding for wheel
 %                       - finding peaks: negtopos, postoneg
+%                 - accounting for end peaks (not full laps)
+%                 - accounting for false peaks
+%                 - if a peak vector (pos or neg) has a nan value, that
+%                 means the other peak vector has a false peak
     
     pos = analogin.pos;
     ts = analogin.ts; % in sec
+
 
 % Find out if wheel trials go postoneg or negtopos (Reagan 4/29/21 - I
 % think this works?)
@@ -22,8 +27,10 @@ function [len_ep, ts_ep, vel_ep, tr_ep, len_ep_fast, ts_ep_fast, vel_ep_fast] =g
     elseif diffmax_postoneg > diffmax_negtopos
         trialType = 'postoneg';
     end
+   
 %% Finding position over time
 % Find max and min voltage
+
 pos_r = rescale(pos);
 pospeak_thr = 0.85; % because signal between 0 and 1
 negpeak_thr = -0.15;
@@ -52,22 +59,19 @@ elseif trN_idx(end) < trP_idx(end)
     lastTrPeak = 'positive_last';
 end
 
-if strcmpi(firstTrPeak, 'positive_first')
-    if strcmpi(trialType,'negtopos')
-        % remove first (positive) index that occurs (we only want full
-        % laps)
-        if trP_idx(1) < trN_idx(1)
+%%
+if strcmpi(trialType,'negtopos')
+        % remove half laps
+        if strmpi(firstTrPeak, 'positive_first')
             trP_idx(1) = [];
         end
-        
-        if strcmpi(lastTrPeak, 'negative_last')
-            trN_idx(end) = [];
-        end
+     
         % insert here:multiple peaks workaround (when clipping of signal
         if length(trP_idx)> length(trN_idx)
             peaksIdx(1) = trP_idx(1);
             for i = 2:numel(trN_idx)-1
                 peak_temp = find(trP_idx> trN_idx(i) & trP_idx<trN_idx(i+1));
+                
                 if numel(peak_temp)>1
                     peak_temp = peak_temp(end);
                     peaksIdx(i) = trP_idx(peak_temp);
@@ -81,7 +85,6 @@ if strcmpi(firstTrPeak, 'positive_first')
                     end
                 end
             end
-            
             trP_idx = peaksIdx;
             
         elseif length(trN_idx)> length(trP_idx)
@@ -105,16 +108,30 @@ if strcmpi(firstTrPeak, 'positive_first')
             trN_idx = peaksIdx;
             
         end
-    elseif strcmpi(trialType, 'postoneg')
+        %if there is a nan value in the positive vector (means there was not a corresponding 
+        % stop time to a start time, so there is a false peak,  - delete the next
+        %negative index value (false peak)
+         neg_nan = find(isnan(trN_idx));
+         pos_nan = find(isnan(trP_idx));
+         if numel(pos_nan) >=1
+            trP_idx(neg_nan) = [];
+            trN_idx(neg_nan+1) = [];
+         end
+         if numel(neg_nan) >=1
+             disp('Something wrong');
+         end
+         if trN_idx(end) > trP_idx(end)
+            trN_idx(end) = [];
+         end
+  elseif strcmpi(trialType, 'postoneg')
         %Reagan adding this section in 4/30/21
         % insert here:multiple peaks workaround (when clipping of signal
         %if there are more positive peaks than negative peaks, find the
         %extra peaks and take them out - Just changed everything N to P and
         %P to N
         
-        %Reagan add this in - 5/3/21
-        if strcmpi(lastTrPeak, 'positive_last')
-            trP_idx(end) = [];
+        if strcmpi(firstTrPeak, 'negative_first')
+            trN_idx(1) = [];
         end
         
         if length(trN_idx)> length(trP_idx)
@@ -157,141 +174,35 @@ if strcmpi(firstTrPeak, 'positive_first')
                 end
             end
             trP_idx = peaksIdx;
+            
         end
-    end
-    % in one of the trials i got NaNs? This works but check which trials
-    % are taken out.
+        %if there is a nan value in the negative vector - delete the next
+        %positive index value (false peak)
+         neg_nan = find(isnan(trN_idx));
+         pos_nan = find(isnan(trP_idx));
+         if numel(neg_nan) >= 1
+            trP_idx(neg_nan+1) = [];
+            trN_idx(neg_nan) = [];
+         end
+         if numel(pos_nan) >= 1
+             disp('Something wrong');
+         end
+         if trN_idx(end) < trP_idx(end)
+            trP_idx(end) = [];
+         end
     
-    trP_idx(isnan(trN_idx)) = [];
-    trialsCutOut = find(isnan(trN_idx));
-    trN_idx(isnan(trN_idx)) = [];
+    end
+    
+%     
+% Reagan commenting out - added similar piece of code within loop
+%     trP_idx(isnan(trN_idx)) = [];
+%     trialsCutOut = find(isnan(trN_idx));
+%     trN_idx(isnan(trN_idx)) = [];
+   
     
     trStart_idx = trN_idx;
     trStop_idx = trP_idx;
-    
-    %% THIS NEEDS TO BE FIXED
-elseif strcmpi(firstTrPeak,'negative_first')
-    
-    if strcmpi(trialType,'negtopos')
-        
-          
-        if strcmpi(lastTrPeak, 'negative_last')
-            trN_idx(end) = [];
-        end
-        % insert here:multiple peaks workaround (when clipping of signal
-        if length(trP_idx)> length(trN_idx)
-            peaksIdx(1) = trP_idx(1);
-            for i = 2:numel(trN_idx)-1
-                peak_temp = find(trP_idx> trN_idx(i) & trP_idx<trN_idx(i+1));
-                
-                if numel(peak_temp)>1
-                    peak_temp = peak_temp(end);
-                    peaksIdx(i) = trP_idx(peak_temp);
-                elseif isempty(peak_temp)
-                    peaksIdx(i) = NaN;
-                else
-                    if i == 1 %add in if
-                         continue
-                     else
-                     peaksIdx(i) = trP_idx(peak_temp);%take out +1
-                    end
-                end
-            end
-            
-            trP_idx = peaksIdx;
-            
-            
-        elseif length(trN_idx)> length(trP_idx)
-            peaksIdx(1) = trN_idx(1);
-            for i = 2:numel(trP_idx)-1
-                peak_temp = find(trN_idx> trP_idx(i) & trN_idx<trP_idx(i+1));
-                
-                if numel(peak_temp)>1
-                    peak_temp = peak_temp(end);
-                    peaksIdx(i) = trN_idx(peak_temp);
-                elseif isempty(peak_temp)
-                    peaksIdx(i) = NaN;
-                else
-                    if i == 1 %add in if
-                         continue
-                     else
-                     peaksIdx(i) = trN_idx(peak_temp);%take out +1
-                    end
-                end
-            end
-            trN_idx = peaksIdx;
-            
-        end
-        elseif strcmpi(trialType, 'postoneg')
-        %Reagan adding this section in 4/30/21
-        % insert here:multiple peaks workaround (when clipping of signal
-        %if there are more positive peaks than negative peaks, find the
-        %extra peaks and take them out - Just changed everything N to P and
-        %P to N
-        
-        if trN_idx(1) < trP_idx(1)
-            trN_idx(1) = [];
-        end
-          
-        if strcmpi(lastTrPeak, 'positive_last')
-            trP_idx(end) = [];
-        end
-        
-        %something goes wrong here - Reagan note 5.3.21
-        % how do we account for multiple peaks in other pos/neg peak
-        % vector?? 
-        if length(trN_idx)> length(trP_idx)
-            peaksIdx(1) = trN_idx(1); % make 1
-            for i = 2:numel(trP_idx)-1 %add in 2 to end
-                peak_temp = find(trN_idx> trP_idx(i) & trN_idx<trP_idx(i+1));
-                
-                if numel(peak_temp)>1
-                    peak_temp = peak_temp(end);
-                    peaksIdx(i) = trN_idx(peak_temp); %take out +1
-                elseif isempty(peak_temp)
-                    peaksIdx(i) = NaN; %take out +1
-                else
-                     if i == 1 %add in if
-                         continue
-                     else
-                     peaksIdx(i) = trN_idx(peak_temp);%take out +1
-                     end
-                end
-            end  
-         
-            
-            trN_idx = peaksIdx;
-            
-        elseif length(trP_idx)> length(trN_idx)
-            peaksIdx(1) = trP_idx(1);
-            for i = 2:numel(trN_idx)-1
-                peak_temp = find(trP_idx> trN_idx(i) & trP_idx<trN_idx(i+1));
-                
-                if numel(peak_temp)>1
-                    peak_temp = peak_temp(end);
-                    peaksIdx(i) = trP_idx(peak_temp);
-                elseif isempty(peak_temp)
-                    peaksIdx(i) = NaN;
-                else
-                    if i == 1 %add in if
-                         continue
-                     else
-                     peaksIdx(i) = trP_idx(peak_temp);%take out +1
-                    end
-                end    
-            end
-            trP_idx = peaksIdx;
-            
-        end  
-    end
-    
-    % in one of the trials i got NaNs? This works but check which trials
-    % are taken out.
-    
-    trP_idx(isnan(trN_idx)) = [];
-    trialsCutOut = find(isnan(trN_idx));
-    trN_idx(isnan(trN_idx)) = [];
-    
+ 
     if  strcmpi(trialType,'negtopos')
         trStart_idx = trN_idx;
         trStop_idx = trP_idx;
@@ -299,7 +210,7 @@ elseif strcmpi(firstTrPeak,'negative_first')
         trStart_idx = trP_idx;
         trStop_idx = trN_idx;
     end
-end
+
 
 %%
 
