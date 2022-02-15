@@ -82,10 +82,11 @@ if isnumeric(rewardChan)
     chans = [chans rewardChan];
 end
 
-analog = bz_LoadBinary([basename '_analogin.dat'], 'frequency', samplingRate, ...
-    'nChannels', 8, 'channels', chans);
-v   = analog * 0.000050354; % convert to volts, intan conversion factor
+analog = double(bz_LoadBinary([basename '_analogin.dat'], 'frequency', samplingRate, ...
+    'nChannels', 8, 'channels', chans));
+v   = analog .* 0.000050354; % convert to volts, intan conversion factor
 
+clear analog
 
 %wheel
 if isnumeric(wheelChan)
@@ -98,15 +99,19 @@ if isnumeric(wheelChan)
 
 end
 
+clear pos
+
 %pulse
 if isnumeric(pulseChan)
-    pulse   = v(:,2);
+    pulse   = v(:,ismember(chans, pulseChan));
     
     if downsampleFactor ~=0
         pulse   = downsample(pulse,downsampleFactor);
     end
     analogin.pulse   = pulse;
 end
+
+clear pulse
 
 %reward
 if isnumeric(rewardChan)
@@ -117,6 +122,8 @@ if isnumeric(rewardChan)
     analogin.reward  = reward;
 end
 
+clear reward
+
 
 %time and sr
 sr      = samplingRate;
@@ -124,7 +131,7 @@ if downsampleFactor ~=0
     sr = samplingRate/downsampleFactor;
 end
 
-analogin.ts      = (1:length(v(:,1)))/sr;
+analogin.ts      = (1:length(analogin.pos(:,1)))/sr;
 analogin.sr      = sr;
 
 

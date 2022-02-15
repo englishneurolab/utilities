@@ -24,7 +24,7 @@ end
 prob_uncor = rawCCG/n;
 
 %calculate low freq. network comodulation
-[ ~, pred ] = cch_conv( rawCCG, round(conv_win/binSize));
+[ ~, pred ] = bz_cch_conv( rawCCG, round(conv_win/binSize));
 
 
 hiBound=poissinv(1-alpha,pred);

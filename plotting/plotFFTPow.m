@@ -1,4 +1,4 @@
-function plotLFPPow
+function plotLFPPow(lfpPow)
 %
 % This function is meant to plot the output from the getFFTPow function
 %
@@ -44,10 +44,17 @@ function plotLFPPow
 %% Load files
 basename = bz_BasenameFromBasepath(cd)
 
-load([basename '.lfpPow.mat'])
+
 
 load([basename '.session.mat'])
 
+
+if ~isempty(session.channelTags.Bad.channels)
+    badChans = ismember(cell2mat(session.extracellular.electrodeGroups.channels), session.channelTags.Bad.channels);
+    
+    chans = setxor(cell2mat(session.extracellular.electrodeGroups.channels), session.channelTags.Bad.channels);
+    
+end
 
 
 %% 
@@ -57,13 +64,13 @@ colors = ['b';'g';'r';'c';'m';'y';'k'];
 %% Plot total anatomical spectrigram (set ==250 or ==500)
 
 figure
-imagesc(lfpPow.pow(1:find(lfpPow.freqs == 250),:)')
+imagesc(lfpPow.pow(1:find(lfpPow.freqs == 250),~badChans)')
 hold on
 title('Frequency power across anatomical channels')
 
 ylabel('Channels')
-set(gca, 'YTick', 1:length(session.extracellular.electrodeGroups.channels{1}))
-yticklabels([session.extracellular.electrodeGroups.channels{1}])
+set(gca, 'YTick', 1:length(chans))
+yticklabels([chans])
 
 xlabel('Frequency (Hz)')
 set(gca, 'XTick', 1:100000:find(lfpPow.freqs == 250))
