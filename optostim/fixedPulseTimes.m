@@ -1,21 +1,17 @@
-function [finPulseTimes, groupVec] = fixedPulseTimes(analogin,pulseLength);
+function [finPulseTimes, groups] = fixedPulseTimes(analogin,pulseLength);
 %getPulseTimes - get pulse times for fixed inteval pulses             
 %
 % USAGE
 %    [finPosPulseIdx] = fixedPulseTimes(analogin)
 %    
-%    Locate the start times of the pulses
+%    Locate the start times of the pulses. The off times are estimated 
+%    using the on times and adding the length of the pulse.
 %
 % INPUTS 
 %    analogin       struct containing pulse and ts, shorted to cut out
 %                   recording before pulses
 %	 pulseLength    length of pulse in seconds, default to 0.1 s	
 %
-%    =========================================================================
-%     Properties    Values
-%    -------------------------------------------------------------------------
-%     
-%    =========================================================================
 %
 % OUTPUT
 %
@@ -24,7 +20,6 @@ function [finPulseTimes, groupVec] = fixedPulseTimes(analogin,pulseLength);
 %     groupVec          Two column matrix containing indecies and group
 %                       number
 % 
-
 % History
 %  Lianne ----- 2021
 %  Emma ---- 2/2/2022 Line 85: added absolute value to the diff of pulse
@@ -32,13 +27,11 @@ function [finPulseTimes, groupVec] = fixedPulseTimes(analogin,pulseLength);
 %           artifacts
 %           2/3/2022 finNegPulseIdx defined by finPosPulseIdx under assumption
 %           of finPosPulseIdx accuracy and pulse length uniform
-
 pulse = analogin.pulse;
 ts = analogin.ts;
 pulseLength = pulseLength; %default 0.1 seconds
 %% Finding depolarizations over time
  selPosPulseIdx = [];
- selNegPulseIdx= [];
 
 diffPulse = diff(abs(pulse)); 
 
@@ -56,8 +49,7 @@ for i = 1:length(selPosPulseIdx)-1
     end
 end
 
-% Convert back to times: 
-% the off times are estimated here using the on times and adding the length of the pulse
+% Convert back to times: the off times are estimated here using the on times and adding the length of the pulse
 finPulseTimes = [(ts([finPosPulseIdx]))'  (ts([finPosPulseIdx])+pulseLength)'];
 
 %% Group Sort: 
@@ -80,10 +72,20 @@ for j = 1:length(diffPulse)
     end
 end
 
-group1 = [group1'  ones(length(group1),1)];
-group2 = [group2'  2*ones(length(group2),1)];
-group3 = [group3'  3*ones(length(group3),1)];
+% Convert back to times: 
+% the off times are estimated here using the on times and adding the length of the pulse
+group1 = [(ts([group1]))'  (ts([group1])+pulseLength)'];
+group2 = [(ts([group2]))'  (ts([group2])+pulseLength)'];
+group3 = [(ts([group3]))'  (ts([group3])+pulseLength)'];
 
-groupVec = [group1; group2; group3];
 
+group1 = [group1  ones(length(group1),1)];
+group2 = [group2  2*ones(length(group2),1)];
+group3 = [group3  3*ones(length(group3),1)];
+
+%Draft Struct: necessary for output of group sort, finPulseTimes contains
+%groups 1-3, unsorted
+groups.one = group1;
+groups.two = group2;
+groups.three = group3;
 end

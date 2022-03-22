@@ -78,8 +78,8 @@ thr_diff    = 10*std(pos); % hardcoded
 allidx      = find(abs(diff(pos_in_cm))> thr_diff); % is taking the wheel resets
 
 % determine pos to neg or neg to pos wheel
-[~, trP_idx] = findpeaks(pos, 'MinPeakProminence', 1, 'MinPeakHeight', 1);
-[~, trN_idx] = findpeaks(-pos, 'MinPeakProminence', 1, 'MinPeakHeight', -1);
+[~, trP_idx] = findpeaks(analogin.pos, 'MinPeakProminence', 1, 'MinPeakHeight', 1);
+[~, trN_idx] = findpeaks(-analogin.pos, 'MinPeakProminence', 1, 'MinPeakHeight', -1);
 
 if trN_idx(1) - trP_idx(1) == 1
     trN_idx = [];

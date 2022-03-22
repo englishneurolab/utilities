@@ -94,6 +94,8 @@ for i = 1:size(x,1)
     
     if ~isempty(session.channelTags.Bad.channels)
         channels = x(i,~ismember(x(i,:), session.channelTags.Bad.channels));
+    else
+        channels = x(i,:);
     end
     
     lfp = bz_GetLFP(channels);

@@ -53,6 +53,8 @@ if ~isempty(session.channelTags.Bad.channels)
     badChans = ismember(cell2mat(session.extracellular.electrodeGroups.channels), session.channelTags.Bad.channels);
     
     chans = setxor(cell2mat(session.extracellular.electrodeGroups.channels), session.channelTags.Bad.channels);
+else
+    chans = session.extracellular.electrodeGroups.channels{1};
     
 end
 
@@ -64,7 +66,11 @@ colors = ['b';'g';'r';'c';'m';'y';'k'];
 %% Plot total anatomical spectrigram (set ==250 or ==500)
 
 figure
-imagesc(lfpPow.pow(1:find(lfpPow.freqs == 250),~badChans)')
+if exist('badChans')
+    imagesc(lfpPow.pow(1:find(lfpPow.freqs == 250),~badChans)')
+else
+    imagesc(lfpPow.pow(1:find(lfpPow.freqs == 250),:)')
+end
 hold on
 title('Frequency power across anatomical channels')
 
