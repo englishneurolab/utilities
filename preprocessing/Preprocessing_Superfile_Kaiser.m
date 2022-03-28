@@ -92,7 +92,7 @@ Chans.Analog.pulse  = nan;
 % Chans.Analog.pulseSH4 = 6;
 
 % base 0
-% Chans.Ripchan       = Ripchan;
+Chans.Ripchan       = 50;
 Chans.HFOchan       = HFOchan;
 Chans.HFOichan      = 12;
 Chans.SWchan        = SWchan;
@@ -141,16 +141,17 @@ run = getRunEpochs(basepath,vel,'saveMat', true, 'minRunSpeed', 0.5);
 % % % Find HFOs
 %%%%%%%%%%%%%%%%%%%%%%%
 
-lfp = bz_GetLFP('all')
+HFOlfp = bz_GetLFP(Chans.HFOchan)
 
 HFOs = bz_FindRipples(cd,Chans.HFOchan,'durations',[50 150],...
     'thresholds',[1 1], 'passband',[100 250], 'EMGThresh', 0.9,'saveMat',false);
 
-HFOFilt = bz_Filter(lfp, 'passband', [100 250]);
+HFOFilt = bz_Filter(HFOlfp, 'passband', [100 250]);
+HFOFilt.data = double(HFOFilt.data)*0.195;
 
-[HFO_maps,HFO_data,HFO_stats] = bz_RippleStats(HFOFilt.data(:,HFOs.detectorinfo.detectionchannel),HFOFilt.timestamps,HFOs);
+[HFO_maps,HFO_data,HFO_stats] = bz_RippleStats(HFOFilt.data,HFOFilt.timestamps,HFOs);
 
-[HFOs] = evtAvgLFP(HFOs);
+[HFOs] = evtAvgLFP(HFOs,'channels',Chans.HFOchan);
 
 save([basename '.HFOs.stats.mat'], 'HFO_maps','HFO_data','HFO_stats')
 
@@ -165,8 +166,20 @@ makeHFOsFile
 % % % Find Ripples
 %%%%%%%%%%%%%%%%%%%%%%%
 
+
+Riplfp = bz_GetLFP(Chans.Ripchan)
+
 ripples = bz_FindRipples(cd,Chans.Ripchan,'durations',[30 150],...
     'thresholds',[2 5], 'passband',[100 250],'saveMat',false);
+
+[ripples] = evtAvgLFP(ripples,'channels',Chans.Ripchan);
+
+RipFilt = bz_Filter(Riplfp, 'passband', [100 250]);
+RipFilt.data = double(RipFilt.data)*0.195;
+
+[Rip_maps,Rip_data,Rip_stats] = bz_RippleStats(RipFilt.data,RipFilt.timestamps,ripples);
+
+save([basename '.Rips.stats.mat'], 'Rip_maps','Rip_data','Rip_stats')
 
 save([basename '.ripples.events.mat'], 'ripples')
 
@@ -235,7 +248,7 @@ SleepState = SleepScoreMaster(cd); %,'rejectChannels', rejectChannels,'noPrompts
 %%
 % make input struct for the state editor (analogin motion)
 basename = bz_BasenameFromBasepath(cd)
-lfp = bz_GetLFP([83 95 68]) % top channel, best rip chan, bottom channel only do 3 channels
+lfp = bz_GetLFP([85 93 81]) % top channel, best rip chan, bottom channel only do 3 channels
 x = ones(1,3);
 inputData.rawEeg = mat2cell(double(lfp.data),length(lfp.data),x)
 inputData.eegFS = 1
@@ -243,13 +256,13 @@ inputData.Chs = lfp.channels
 inputData.MotionType = 'File'
 
 %comment out if getAnaloginVals (line 118) has not been run
-inputData.motion = double(bz_LoadBinary([basename '_analogin.dat'],'nChannels', 8, 'channels', Chans.Analog.pos + 1, 'precision', 'uint16', 'downsample', 30000)) * 0.000050354; %state editor motion needs data in a one hz format
-inputData.motion(end) = []; % this may be needed if you run into an error
+inputData.motion = double(bz_LoadBinary([basename '_analogin.dat'],'nChannels', 8, 'channels', Chans.Analog.pos, 'precision', 'uint16', 'downsample', 30000)) * 0.000050354; %state editor motion needs data in a one hz format
+% inputData.motion(end) = []; % this may be needed if you run into an error
 % on line 983
 clear lfp
 %EHW 21.10.14 - error here at inputData.motion  = double
 
-TheStateEditor(basename) %inputData) % this is the manual state editor, use to check the automation of the sleepscoremaster
+TheStateEditor(basename)%,inputData) % this is the manual state editor, use to check the automation of the sleepscoremaster
 % % for troublshooting with Lianne
 % % inputData.motion = downsample(analogin.pos,30000)
 
@@ -283,7 +296,7 @@ session.extracellular.chanCoords.y = chanCoords.y;
 save([basename '.session.mat'], 'session')
 save([basename '.chanCoords.channelInfo.mat'], 'chanCoords')
 
-cell_metrics = ProcessCellMetrics('session', session, 'showGUI', true);
+cell_metrics = ProcessCellMetrics('session', session, 'spikes', spikes,'showGUI', true);
 
 cell_metrics = CellExplorer('metrics',cell_metrics);
 % now cell_metrics is finished and ready to be worked with

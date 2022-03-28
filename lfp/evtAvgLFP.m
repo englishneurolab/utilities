@@ -24,6 +24,8 @@ function [events] = evtAvgLFP(events,varargin)
 %    
 %    'tWin'     - the time around each event to average in seconds
 %                 (default = .5)
+%    'channels' - channels to get average LFP, base 0 
+%                 (ex. [1 2 3 4], default = all)
 %    'evtName'  - string name of the events being input (ex. 'ripples')
 %    'sr'       - sampling rate of .lfp (default = 1250)
 %    'allEvents - logical of whether to collect all events (default = true)
@@ -43,6 +45,7 @@ function [events] = evtAvgLFP(events,varargin)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Todos
+%    Add ability to specifiy specific events
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % History
@@ -58,6 +61,7 @@ addParameter(p,'save',true,@islogical);
 addParameter(p,'evtName',[],@isstring);
 addParameter(p,'sr',1250,@isnumeric);
 addParameter(p,'allEvents',true,@islogical);
+addParameter(p,'channels',[],@isnumeric);
 
 parse(p,varargin{:})
 
@@ -67,6 +71,7 @@ saveLog   = p.Results.save;
 evtName   = p.Results.evtName;
 sr        = p.Results.sr; 
 allEvents = p.Results.allEvents;
+channels  = p.Results.channels;
 
 %% Load in files
 
@@ -77,26 +82,27 @@ basename = bz_BasenameFromBasepath(basepath);
 load([basename '.session.mat']);
 
 
-lfp = bz_GetLFP(events.detectorinfo.detectionchannel);
+lfp = bz_GetLFP([channels]);
 
 
 
 %% Calculate average
+% 
+% events.traces = cell(length(events.peaks),1);
 
-events.traces = cell(length(events.peaks),1);
-
-run_sum = zeros(1,sr+1); % reserve staring matix to add to
+run_sum = zeros(1,sr+1);% reserve staring matix to add to
+events.traces = zeros(length(events.peaks),sr+1)
 for ii = 1:length(events.peaks)
     
-    if allEvents
-        
-        [~,str] = min(abs(events.timestamps(ii,1) - lfp.timestamps));
-        [~,stp] = min(abs(events.timestamps(ii,2) - lfp.timestamps));
-        
-        events.traces(ii) = {lfp.data(str:stp)};
-        
-        
-    end
+%     if allEvents
+%         
+%         [~,str] = min(abs(events.peaks(ii,1) - lfp.timestamps));
+%         [~,stp] = min(abs(events.timestamps(ii,2) - lfp.timestamps));
+%         
+%         events.traces(ii) = {lfp.data(str:stp)};
+%         
+%         
+%     end
     
     if events.peaks(ii) < tWin
         continue
@@ -106,6 +112,7 @@ for ii = 1:length(events.peaks)
     end
     [~,idx] = min(abs((events.peaks(ii)-tWin) - lfp.timestamps));
     temp_evt = double(lfp.data(idx:idx+(sr*tWin*2)))';
+    events.traces(ii,:) = temp_evt;
     run_sum = run_sum + temp_evt;
     
     

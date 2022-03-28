@@ -12,7 +12,7 @@ function [peth] = getPETH_epochs(basepath, varargin)
 %    'basepath'     - folder in which .spikes.cellinfo.mat can be found (required, Default
 %                   is pwd)
 %    'basename'     - basefile name to load
-%    'epochs'       - [N x 2] matrix of epochs that PETH should be over
+%    'epochs'       - [N x 2] or [N x 1] matrix of epochs that PETH should be over
 %                   centered around
 %    'timwin'       - time window over which PETH should be
 %                   calculated (Default: [-0.4 0.4])
