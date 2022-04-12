@@ -65,7 +65,7 @@ load([basename '.sessionInfo.mat']);
 
 anatchannels = cell2mat(session.extracellular.electrodeGroups.channels);
 
-channels = sessionInfo.channels;
+anatchannels = sessionInfo.channels;
 
 passband = [0 250];
 
@@ -83,22 +83,22 @@ F = cell2mat(struct2cell(F));
 %% Whiten LFP
 disp('Whitening and filtering LFP signal... Go grab a coffee.');
 
-x = reshape(channels, length(channels)/chunks ,chunks)';
+x = reshape(anatchannels, length(anatchannels)/chunks ,chunks)';
 
 
 
 
 data = [];
-channels = [];
+anatchannels = [];
 for i = 1:size(x,1)
     
     if ~isempty(session.channelTags.Bad.channels)
-        channels = x(i,~ismember(x(i,:), session.channelTags.Bad.channels));
+        anatchannels = x(i,~ismember(x(i,:), session.channelTags.Bad.channels));
     else
-        channels = x(i,:);
+        anatchannels = x(i,:);
     end
     
-    lfp = bz_GetLFP(channels);
+    lfp = bz_GetLFP(anatchannels);
     
     lfpwhiten = bz_whitenLFP(lfp);
     

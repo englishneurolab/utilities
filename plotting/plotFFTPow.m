@@ -1,4 +1,4 @@
-function plotLFPPow(lfpPow)
+function plotFFTPow(lfpPow)
 %
 % This function is meant to plot the output from the getFFTPow function
 %
@@ -69,7 +69,7 @@ figure
 if exist('badChans')
     imagesc(lfpPow.pow(1:find(lfpPow.freqs == 250),~badChans)')
 else
-    imagesc(lfpPow.pow(1:find(lfpPow.freqs == 250),:)')
+    imagesc(lfpPow.pow(1:find(lfpPow.freqs == 250))')
 end
 hold on
 title('Frequency power across anatomical channels')

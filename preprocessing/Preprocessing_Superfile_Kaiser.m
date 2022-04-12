@@ -1,4 +1,4 @@
-%% Kaiser official preprocessing pipeline
+% Kaiser official preprocessing pipeline
 
 %%
 %%%%%%%%%%%%%%%%%%%%%%% 
@@ -92,7 +92,7 @@ Chans.Analog.pulse  = nan;
 % Chans.Analog.pulseSH4 = 6;
 
 % base 0
-Chans.Ripchan       = 50;
+Chans.Ripchan       = 58;
 Chans.HFOchan       = HFOchan;
 Chans.HFOichan      = 12;
 Chans.SWchan        = SWchan;
@@ -113,10 +113,11 @@ save([basename '.Chans.mat'], 'Chans')
 
 
 
-analogin = getAnaloginVals(cd,'wheelChan', Chans.Analog.pos, 'pulseChan', Chans.Analog.pulse...
-    , 'rewardChan', 'none', 'downsampleFactor', 24);
+% analogin = getAnaloginVals(cd,'wheelChan', Chans.Analog.pos, 'pulseChan', Chans.Analog.pulse...
+%     , 'rewardChan', 'none', 'downsampleFactor', 24);
 
-              
+analogin = getAnaloginVals(cd,'wheelChan', Chans.Analog.pos);
+
 
 % Velocity
 
@@ -144,10 +145,11 @@ run = getRunEpochs(basepath,vel,'saveMat', true, 'minRunSpeed', 0.5);
 HFOlfp = bz_GetLFP(Chans.HFOchan)
 
 HFOs = bz_FindRipples(cd,Chans.HFOchan,'durations',[50 150],...
-    'thresholds',[1 1], 'passband',[100 250], 'EMGThresh', 0.9,'saveMat',false);
+    'thresholds',[0.5 1], 'passband',[100 250], 'EMGThresh', 0.9,'saveMat',false);
 
 HFOFilt = bz_Filter(HFOlfp, 'passband', [100 250]);
 HFOFilt.data = double(HFOFilt.data)*0.195;
+
 
 [HFO_maps,HFO_data,HFO_stats] = bz_RippleStats(HFOFilt.data,HFOFilt.timestamps,HFOs);
 
@@ -156,6 +158,10 @@ HFOFilt.data = double(HFOFilt.data)*0.195;
 save([basename '.HFOs.stats.mat'], 'HFO_maps','HFO_data','HFO_stats')
 
 save([basename '.HFOs.events.mat'], 'HFOs')
+
+HFOsMan.timestamps = HFOs.timestamps;
+
+save([basename '.HFOsMan.manipulation.mat'],'HFOsMan')
 
 clear('HFO_maps','HFO_data','HFO_stats','HFOFilt')
 
@@ -180,6 +186,10 @@ RipFilt.data = double(RipFilt.data)*0.195;
 [Rip_maps,Rip_data,Rip_stats] = bz_RippleStats(RipFilt.data,RipFilt.timestamps,ripples);
 
 save([basename '.Rips.stats.mat'], 'Rip_maps','Rip_data','Rip_stats')
+
+RipMan.timestamps = ripples.timestamps;
+
+save([basename '.RipMan.manipulation.mat'],'RipMan')
 
 save([basename '.ripples.events.mat'], 'ripples')
 
@@ -231,6 +241,10 @@ save([basename '.HFOs.events.mat'], 'HFOs')
 %skip with m150 on laptop
 
 spikes = bz_LoadPhy_CellExplorer;
+
+spikes.cluID = spikes.UID;
+
+save([basename 'spikes.cellinfo.mat'],'spikes')
 
 
 
@@ -289,9 +303,11 @@ session = sessionTemplate(cd,'showGUI',true);
 load('Chanmap_H3_Acute.mat')
 chanCoords.x = xcoords;
 chanCoords.y = ycoords;
+chanCoords.verticalSpacing = 20;
 
 session.extracellular.chanCoords.x = chanCoords.x;
 session.extracellular.chanCoords.y = chanCoords.y;
+session.extracellular.chanCoords.verticalSpacing = 20;
 
 save([basename '.session.mat'], 'session')
 save([basename '.chanCoords.channelInfo.mat'], 'chanCoords')
