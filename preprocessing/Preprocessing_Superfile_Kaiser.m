@@ -93,7 +93,7 @@ Chans.Analog.pulse  = nan;
 
 % base 0
 Chans.Ripchan       = 58;
-Chans.HFOchan       = HFOchan;
+Chans.HFOchan       = 41;
 Chans.HFOichan      = 12;
 Chans.SWchan        = SWchan;
 
@@ -145,7 +145,7 @@ run = getRunEpochs(basepath,vel,'saveMat', true, 'minRunSpeed', 0.5);
 HFOlfp = bz_GetLFP(Chans.HFOchan)
 
 HFOs = bz_FindRipples(cd,Chans.HFOchan,'durations',[50 150],...
-    'thresholds',[0.5 1], 'passband',[100 250], 'EMGThresh', 0.9,'saveMat',false);
+    'thresholds',[0.5 0.75], 'passband',[100 250], 'EMGThresh', 0.9,'saveMat',false);
 
 HFOFilt = bz_Filter(HFOlfp, 'passband', [100 250]);
 HFOFilt.data = double(HFOFilt.data)*0.195;
