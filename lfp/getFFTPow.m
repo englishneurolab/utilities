@@ -37,6 +37,7 @@ function getFFTPow(basepath,session,chunks,varargin)
 %
 % Todos
 %   - make channels an optional input
+%   - change output to be intiger values
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % History
@@ -65,7 +66,7 @@ load([basename '.sessionInfo.mat']);
 
 anatchannels = cell2mat(session.extracellular.electrodeGroups.channels);
 
-anatchannels = sessionInfo.channels;
+channels = sessionInfo.channels;
 
 passband = [0 250];
 
@@ -83,70 +84,64 @@ F = cell2mat(struct2cell(F));
 %% Whiten LFP
 disp('Whitening and filtering LFP signal... Go grab a coffee.');
 
-x = reshape(anatchannels, length(anatchannels)/chunks ,chunks)';
+x = reshape(channels, length(channels)/chunks ,chunks)';
 
 
 
 
-data = [];
-anatchannels = [];
+
+channels = [];
+lfpPow.pow = [];
 for i = 1:size(x,1)
     
     if ~isempty(session.channelTags.Bad.channels)
-        anatchannels = x(i,~ismember(x(i,:), session.channelTags.Bad.channels));
+        channels = x(i,~ismember(x(i,:), session.channelTags.Bad.channels));
     else
-        anatchannels = x(i,:);
+        channels = x(i,:);
     end
     
-    lfp = bz_GetLFP(anatchannels);
+    lfp = bz_GetLFP(channels);
+    
+    Fs = lfp.samplingRate;
+    L = length(lfp.timestamps);
     
     lfpwhiten = bz_whitenLFP(lfp);
+    clear lfp
     
     filtered = bz_Filter(lfpwhiten, 'passband', passband);%'stopband', secondFilt, 'filter', 'fir1');
+    clear lfpwhiten
+
+
+    disp('Computing FFT')
     
-%     if secondFilt > 0
-%         filtered = bz_Filter(filtered, 'stopband', secondFilt, 'filter', 'fir1');
-%     end
-    
-    data = [data filtered.data];
+    y4yay = [];
+    for i = 1:length(channels)
+        
+        
+        y4yay = fft(filtered.data(:,i)); % run fast foureir transform
+        P2 = abs(y4yay/L); % compute the 2 sided spectrum
+        P1 = P2(1:L/2+1); % compute the 1 sided spectrum
+        P1(2:end-1) = 2*P1(2:end-1); %
+        
+        
+        pow(:,i) = sgolayfilt(P1, 5, 5001); % Filter fft
+        
+    end
+    lfpPow.pow = [lfpPow.pow pow];
 end
 
 %%
-disp('Computing FFT')
-Fs = filtered.samplingRate;
-L = length(filtered.timestamps);
+
+lfpPow.pow = lfpPow.pow(:,anatchannels);
 
 if ~isempty(session.channelTags.Bad.channels)
-    anatchannels = setxor(cell2mat(session.extracellular.electrodeGroups.channels),session.channelTags.Bad.channels);
+    lfpPow.pow(:,session.channelTags.Bad.channels) = nan;
 end
-
-
-y4yay = [];
-
-for i = 1:length(anatchannels)
-    
-    y4yay = fft(data(:,i)); % run fast foureir transform
-    P2 = abs(y4yay/L); % compute the 2 sided spectrum
-    P1 = P2(1:L/2+1); % compute the 1 sided spectrum
-    P1(2:end-1) = 2*P1(2:end-1); % 
-    
-    
-    lfpPow.pow(:,i) = sgolayfilt(P1, 5, 5001); % Filter fft
-    
-end
-
 
 
 lfpPow.freqs = Fs*(1:(L/2))/L;% round((Fs*(1:(L/2))/L) + 1);
 lfpPow.channels = anatchannels;
 
-% 
-% res = zeros(length(lfpPow.freqs),1);
-% res(1:round((L/2)/(Fs/2)):end) = 1;
-% res = logical(res);
-
-% lfpPow.freqs = lfpPow.freqs(res);
-% lfpPow.pow = lfpPow.pow(res,:);
 
 
 %% stats

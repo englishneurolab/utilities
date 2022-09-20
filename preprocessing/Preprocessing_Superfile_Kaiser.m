@@ -81,21 +81,23 @@ lfpPow.pow(x,:) = 0;
 Chans.Dig.LinStr    = nan;
 Chans.Dig.LinStp    = nan;
 Chans.Dig.pulse     = nan;
-Chans.Analog.pos    = 2;
+Chans.Analog.pos    = 'Home Cage';
 Chans.Analog.reward = nan;
 Chans.Analog.pulse  = nan;
 
-% For uLED pulse recordings
+% For uLED pulse recordings base 1
 % Chans.Analog.pulseSH1 = 3;
 % Chans.Analog.pulseSH2 = 4;
 % Chans.Analog.pulseSH3 = 5;
 % Chans.Analog.pulseSH4 = 6;
+% 
+% Chans.stimTStr = 8880; % hard coded in seconds
 
 % base 0
-Chans.Ripchan       = 58;
-Chans.HFOchan       = 41;
-Chans.HFOichan      = 12;
-Chans.SWchan        = SWchan;
+Chans.Ripchan       = 47;
+Chans.HFOchan       = 62;
+% Chans.HFOichan      = 12;
+Chans.SWchan        = 58;
 
 
 save([basename '.Chans.mat'], 'Chans')
@@ -142,24 +144,25 @@ run = getRunEpochs(basepath,vel,'saveMat', true, 'minRunSpeed', 0.5);
 % % % Find HFOs
 %%%%%%%%%%%%%%%%%%%%%%%
 
-HFOlfp = bz_GetLFP(Chans.HFOchan)
+basename = bz_BasenameFromBasepath(cd);
 
-HFOs = bz_FindRipples(cd,Chans.HFOchan,'durations',[50 150],...
-    'thresholds',[0.5 0.75], 'passband',[100 250], 'EMGThresh', 0.9,'saveMat',false);
+HFOsL5 = bz_FindRipples(cd,23,'durations',[50 150],...
+    'thresholds',[.5 .75], 'passband',[100 250], 'EMGThresh', 0.9,'saveMat',false);
+
+HFOlfp = bz_GetLFP(HFOsL5.detectorinfo.detectionchannel);
 
 HFOFilt = bz_Filter(HFOlfp, 'passband', [100 250]);
 HFOFilt.data = double(HFOFilt.data)*0.195;
 
+[HFO_maps,HFO_data,HFO_stats] = bz_RippleStats(HFOFilt.data,HFOFilt.timestamps,HFOsL5);
 
-[HFO_maps,HFO_data,HFO_stats] = bz_RippleStats(HFOFilt.data,HFOFilt.timestamps,HFOs);
+[HFOsL5] = evtAvgLFP(HFOsL5,'channels',HFOsL5.detectorinfo.detectionchannel);
 
-[HFOs] = evtAvgLFP(HFOs,'channels',Chans.HFOchan);
+save([basename '.HFOsL5.stats.mat'], 'HFO_maps','HFO_data','HFO_stats')
 
-save([basename '.HFOs.stats.mat'], 'HFO_maps','HFO_data','HFO_stats')
+save([basename '.HFOsL5.events.mat'], 'HFOsL5')
 
-save([basename '.HFOs.events.mat'], 'HFOs')
-
-HFOsMan.timestamps = HFOs.timestamps;
+HFOsMan.timestamps = HFOsL5.timestamps;
 
 save([basename '.HFOsMan.manipulation.mat'],'HFOsMan')
 
@@ -176,7 +179,7 @@ makeHFOsFile
 Riplfp = bz_GetLFP(Chans.Ripchan)
 
 ripples = bz_FindRipples(cd,Chans.Ripchan,'durations',[30 150],...
-    'thresholds',[2 5], 'passband',[100 250],'saveMat',false);
+    'thresholds',[.5 1], 'passband',[100 250],'saveMat',false);
 
 [ripples] = evtAvgLFP(ripples,'channels',Chans.Ripchan);
 
@@ -223,13 +226,13 @@ ints = ints';
     
 
 
-[status,interval,index] = InIntervals(HFOs.peaks,ints);
+[status,interval,index] = InIntervals(HFOsL5.peaks,ints);
 
-HFOs.outPul.timestamps = HFOs.timestamps(~status);
-HFOs.outPul.peaks      = HFOs.peaks(~status);
+HFOsL5.outPul.timestamps = HFOsL5.timestamps(~status);
+HFOsL5.outPul.peaks      = HFOsL5.peaks(~status);
 
-HFOs.inPul.timestamps  = HFOs.timestamps(status);
-HFOs.inPul.peaks       = HFOs.peaks(status);
+HFOsL5.inPul.timestamps  = HFOsL5.timestamps(status);
+HFOsL5.inPul.peaks       = HFOsL5.peaks(status);
 
 save([basename '.HFOs.events.mat'], 'HFOs')
 
@@ -242,9 +245,17 @@ save([basename '.HFOs.events.mat'], 'HFOs')
 
 spikes = bz_LoadPhy_CellExplorer;
 
+cd('Kilosort')
+
+sh = tsvread('cluster_info.tsv','sh');
+
+spikes.shankID = sh(2:end-1)';
+
+cd('..')
+
 spikes.cluID = spikes.UID;
 
-save([basename 'spikes.cellinfo.mat'],'spikes')
+save([basename '.spikes.cellinfo.mat'],'spikes')
 
 
 
@@ -293,20 +304,22 @@ saveThetaSpec
 %%%%%%%%%%%%%%%%%%%%%%%
 % % % Cell Metrics
 %%%%%%%%%%%%%%%%%%%%%%%
-%                       INCOMPLETE - Do not run yet
 % this is where the true metadata for the recording is kept
 session = sessionTemplate(cd,'showGUI',true);
 % Crtl+I - forces use of the .xml probe layout
 % if you have a "Kilosort" folder make sure the relatilve path in the
 % session info has \Kilosort
 
-load('Chanmap_H3_Acute.mat')
-chanCoords.x = xcoords;
-chanCoords.y = ycoords;
+% load('Chanmap_uLED.mat')
+
+z=sortrows([chanMap ycoords xcoords],1);
+
+chanCoords.x = z(:,3);
+chanCoords.y = z(:,2);
 chanCoords.verticalSpacing = 20;
 
-session.extracellular.chanCoords.x = chanCoords.x;
-session.extracellular.chanCoords.y = chanCoords.y;
+session.extracellular.chanCoords.x = z(:,3);
+session.extracellular.chanCoords.y = z(:,2);
 session.extracellular.chanCoords.verticalSpacing = 20;
 
 save([basename '.session.mat'], 'session')

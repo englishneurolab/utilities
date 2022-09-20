@@ -1,4 +1,4 @@
-function plotPhaseMap(varargin)
+function plotPhaseMap(ph_mod,varargin)
 %
 % This function is meant to plot PhaseMaps output from getPhaseMap
 %
@@ -42,24 +42,23 @@ spacing = p.Results.spacing;
 %% Load information
 basepath = cd; 
 basename = bz_BasenameFromBasepath(basepath);
-load([basename '.ph_mod.mat'])
 load([basename '.cell_metrics.cellinfo.mat'])
 
 %% Organizing how to plot
-cells = unique(cell_metrics.putativeCellType)
-
-for i = 1:length(unique(cell_metrics.putativeCellType))
-    types{i} = cellfun(@eq, cell_metrics.putativeCellType, cells)
-end
+% cells = unique(cell_metrics.putativeCellType)
+% 
+% for i = 1:length(unique(cell_metrics.putativeCellType))
+%     types{i} = cellfun(@eq, cell_metrics.putativeCellType, cells)
+% end
 
 %% Plotting
 
 
-for ii = 1:length(unique(cell_metrics.putativeCellType))
+% for ii = 1:length(unique(cell_metrics.putativeCellType))
     figure
-    
+%     
     plotCount = 0;
-    
+     
     SPDim = round(sqrt(size(ph_mod.ph_rate,3)));
     
     for i = 1:size(ph_mod.ph_rate,3);
@@ -70,7 +69,7 @@ for ii = 1:length(unique(cell_metrics.putativeCellType))
         
         pmVals = nanconvn((ph_mod.ph_rate(:,1:end-1,i)),k);
         %= values to plot, nfreq-1 because the values fall within those lines
-        subplot(SPDim,SPDim, plotCount);
+        subplot(SPDim,SPDim+1, plotCount);
         imagesc(ph_mod.ph_bin,[],nanconvn((ph_mod.ph_rate(:,1:end-1,i)),k)...
             ,[min(linearize(ph_mod.ph_rate(:,1:end-1,i)))...
             max(linearize(ph_mod.ph_rate(:,1:end-1,i)))])
@@ -88,4 +87,4 @@ for ii = 1:length(unique(cell_metrics.putativeCellType))
     end
     
     
-end
+% end

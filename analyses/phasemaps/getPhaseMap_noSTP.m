@@ -30,6 +30,7 @@ function [ph_mod] = getPhaseMap_noSTP(basepath, varargin)
 %   'doGammaThetaMod' -
 %   'doRippleCCG'     - Get ripple CCG (Default = true)
 %   'epochs'          - 
+%   'opto'            - opto [str stp] times to ignore(default = false)
 %   'STP'             - logical of whether to use ShortTermPlasticity output
 %                       to look at epochs of time (Default = true)
 %   'channel'         - the channel number you want to use for frequency
@@ -96,6 +97,7 @@ addParameter(p,'nPhaseBins',32,@isnumeric);
 addParameter(p,'doGammaThetaMod',true,@islogical);
 addParameter(p,'doRippleCCG',true,@islogical);
 addParameter(p,'epochs',[],@isnumeric);
+addParameter(p,'opto',[],@isnumeric);
 addParameter(p,'thetaRange',[5 8],@isnumeric);
 addParameter(p,'gammaRange',[39.5 50],@isnumeric);
 addParameter(p,'STP', true,@islogical);
@@ -112,6 +114,7 @@ nPhaseBins      = p.Results.nPhaseBins;
 doGammaThetaMod = p.Results.doGammaThetaMod;
 doRippleCCG     = p.Results.doRippleCCG;
 epochs          = p.Results.epochs;
+opto            = p.Results.opto;
 thetaRange      = p.Results.thetaRange;
 gammaRange      = p.Results.gammaRange;
 STPLog          = p.Results.STP;
@@ -182,7 +185,7 @@ for i = 1:nfreq-1
     filtered.phase                = InstPhase(filter.data ); % inst phase using the hilbert transform
     filtered.amp                  = InstAmplitude(filter.data ); % inst amp using hilbert transorm
     filtered.timestamps           = ts ;
-    filtered.sampleRate           = xml.lfpSampleRate;
+    filtered.samplingRate           = xml.lfpSampleRate;
     filtered.filterparms.passband = [freq(i) freq(i+1)]; % record passband range of the filter for that loop
     spikes1.times{1}              = sort(cell2mat(spikes.times'));
     % puts all cells from the recording into one variable to calculate MUA
@@ -204,7 +207,7 @@ for i = 1:nfreq-1
         
         %convert inst amplitude to normalized amplitude (as was done in
         %bz_PowerPhaseRatemap)
-        amp = NormToInt(log10(filtered.amp),'Z',[0 Inf],filtered.sampleRate);
+        amp = NormToInt(log10(filtered.amp),'Z',[0 Inf],filtered.samplingRate);
         
         filtered.phase(amp<kp_pwr_bns) = nan;
         occ_bin = histc(filtered.phase,ph_bin);
@@ -223,18 +226,22 @@ for i = 1:nfreq-1
                 
                 
                 %only take spikes outside of gd_eps (no stim periods)
-                [status] = InIntervals(spikes.times{j},gd_eps);
-                
-                %smooth spike train
-                instRate = nanconvn(histc(spikes.times{j}(status), filtered.timestamps(1:end)),k);
+                if ~isempty(opto)
+                    [status] = InIntervals(spikes.times{j},gd_eps);
+                    
+                    %smooth spike train
+                    instRate = nanconvn(histc(spikes.times{j}(status), filtered.timestamps(1:end)),k);
+                    ref  =spikes.times{j}(status);
+                else
+                    instRate = nanconvn(histc(spikes.times{j}, filtered.timestamps(1:end)),k);
+                    ref  =spikes.times{j};
+                end
                 
                 %             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 %             %correlate smooth spike train with inst. amplitude
                 %             tmp =  corrcoef(instRate,amp(1:end));
                 %             amp_cor(j,i) = tmp(1,2); % amp_cor is never used again in the function
                 %             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-                
-                ref  =spikes.times{j}(status);
             else
                 instRate = nanconvn(histc(spikes.times{j}, filtered.timestamps(1:end)),k);
                 ref  =spikes.times{j};

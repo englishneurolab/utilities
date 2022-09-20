@@ -37,6 +37,9 @@ function [evtPSD] = getEventPSD(basepath,events,channel,varargin)
 %    evtPSD.filterparms---- Metadata from bz_WaveSpec
 %    evtPSD.eventsName----- Name of events into to the function
 %
+% History
+%
+%    written by Kaiser 2020
 %
 %% Parse inputs
 
@@ -79,7 +82,7 @@ wavespec_tot_events = zeros(sum(abs(twin*sr))+1,nfreqs);
 
 for selEvent = 1:length(events.peaks)
     
-    ind = find(ismember(lfp.timestamps,events.peaks(selEvent)));
+    [~,ind] = min(abs(lfp.timestamps - events.peaks(selEvent)));
     indwin = twin*sr + ind;
     
     if indwin(1)<0 || indwin(2)>length(lfp.data)
@@ -102,13 +105,13 @@ evtPSD.data         = wavespec_tot_events/length(events.peaks);
 evtPSD.freqs        = wavespec_event_temp.freqs;
 evtPSD.nfreqs       = wavespec_event_temp.nfreqs;
 evtPSD.samplingRate = wavespec_event_temp.samplingRate;
-evtPSD.channels     = wavespec_event_temp.channel;
+evtPSD.channels     = channel;
 evtPSD.filterparms  = wavespec_event_temp.filterparms;
 evtPSD.eventsName   = inputname(2);
 
 %% Save
 if saveMat
-    save([basename '.' inputname(2) 'evtPSD.mat'], 'evtPSD')
+    save([basename '.' inputname(2) '.evtPSD.mat'], 'evtPSD')
 end
     
     
